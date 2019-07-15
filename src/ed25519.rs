@@ -209,3 +209,27 @@ impl Signature for Ed25519Signature {
         self.0.to_bytes().to_vec()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Ed25519Keypair;
+
+    use crate::traits::{PrivateKey, PublicKey, Signature};
+
+    use rand::rngs::OsRng;
+
+    #[test]
+    fn should_generate_pair_from_given_rng() {
+        let mut csprng = OsRng::new().unwrap();
+        let keypair = Ed25519Keypair::generate(&mut csprng);
+
+        let pub_key = keypair.pub_key();
+        let priv_key = keypair.priv_key();
+
+        let msg: &[u8] = b"the last night";
+        let sig = priv_key.sign_message(msg);
+
+        assert!(pub_key.verify_signature(msg, &sig).is_ok());
+        assert!(sig.verify(msg, &pub_key).is_ok());
+    }
+}
