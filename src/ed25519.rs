@@ -1,3 +1,6 @@
+// TODO: quick-check tests
+// TODO: documents
+
 use crate::error::CryptoError;
 use crate::traits::{PrivateKey, PublicKey, Signature};
 
