@@ -135,7 +135,7 @@ impl TryFrom<&[u8]> for Ed25519PublicKey {
 impl PublicKey for Ed25519PublicKey {
     type Signature = Ed25519Signature;
 
-    fn verify_signature(&self, msg: &[u8], sig: Self::Signature) -> Result<(), CryptoError> {
+    fn verify_signature(&self, msg: &[u8], sig: &Self::Signature) -> Result<(), CryptoError> {
         sig.verify(msg, self)
     }
 

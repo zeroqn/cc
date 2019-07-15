@@ -16,7 +16,7 @@ pub trait PrivateKey: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
 pub trait PublicKey: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
     type Signature;
 
-    fn verify_signature(&self, msg: &[u8], sig: Self::Signature) -> Result<(), CryptoError>;
+    fn verify_signature(&self, msg: &[u8], sig: &Self::Signature) -> Result<(), CryptoError>;
 
     fn as_bytes(&self) -> &[u8];
 }
