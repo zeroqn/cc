@@ -31,6 +31,10 @@ impl Ed25519Keypair {
         Ed25519PublicKey(self.raw().public)
     }
 
+    pub fn priv_key(self) -> Ed25519PrivateKey {
+        self.into()
+    }
+
     fn raw(&self) -> &ed25519_dalek::Keypair {
         &self.0
     }
