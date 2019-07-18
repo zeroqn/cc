@@ -1,4 +1,5 @@
 // TODO: documents
+// TODO: fixed size msg(msg is actually hash bytes)
 
 use crate::error::CryptoError;
 use crate::traits::{PrivateKey, PublicKey, Signature};
@@ -399,6 +400,7 @@ mod tests {
         ],
     ];
 
+    // TODO: SeedableRng
     #[derive(Clone, Debug)]
     struct Octet32([u8; 32]);
 
