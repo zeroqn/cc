@@ -5,4 +5,5 @@ pub enum CryptoError {
     InvalidSignatureError,
     InvalidPublicKeyError,
     InvalidPrivateKeyError,
+    InvalidMessage,
 }
