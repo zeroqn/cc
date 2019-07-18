@@ -108,7 +108,7 @@ impl Ed25519PublicKey {
     }
 
     pub fn is_valid(&self) -> Result<(), CryptoError> {
-        let bytes = self.as_bytes();
+        let bytes = self.to_bytes();
 
         let mut bits = [0u8; ed25519_dalek::PUBLIC_KEY_LENGTH];
         bits.copy_from_slice(&bytes[..ed25519_dalek::PUBLIC_KEY_LENGTH]);
@@ -145,15 +145,15 @@ impl TryFrom<&[u8]> for Ed25519PublicKey {
     }
 }
 
-impl PublicKey for Ed25519PublicKey {
+impl PublicKey<32> for Ed25519PublicKey {
     type Signature = Ed25519Signature;
 
     fn verify_signature(&self, msg: &[u8], sig: &Self::Signature) -> Result<(), CryptoError> {
         sig.verify(msg, self)
     }
 
-    fn as_bytes(&self) -> &[u8] {
-        self.0.as_bytes()
+    fn to_bytes(&self) -> [u8; 32] {
+        *self.0.as_bytes()
     }
 }
 
@@ -518,7 +518,7 @@ mod tests {
         let private_key = Ed25519PrivateKey::try_from(priv_key.as_ref()).unwrap();
         let pub_key = private_key.pub_key();
 
-        ed25519_dalek::PublicKey::from_bytes(pub_key.as_bytes()).is_ok()
+        ed25519_dalek::PublicKey::from_bytes(&pub_key.to_bytes()).is_ok()
     }
 
     #[quickcheck]

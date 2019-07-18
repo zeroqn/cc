@@ -13,18 +13,18 @@ pub trait PrivateKey: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
     fn as_bytes(&self) -> &[u8];
 }
 
-pub trait PublicKey: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
+pub trait PublicKey<const LENGTH: usize>: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
     type Signature;
 
     fn verify_signature(&self, msg: &[u8], sig: &Self::Signature) -> Result<(), CryptoError>;
 
-    fn as_bytes(&self) -> &[u8];
+    fn to_bytes(&self) -> [u8; LENGTH];
 }
 
-pub trait Signature<const N: usize>: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
+pub trait Signature<const LENGTH: usize>: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
     type PublicKey;
 
     fn verify(&self, msg: &[u8], pub_key: &Self::PublicKey) -> Result<(), CryptoError>;
 
-    fn to_bytes(&self) -> [u8; N];
+    fn to_bytes(&self) -> [u8; LENGTH];
 }
