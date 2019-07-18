@@ -21,10 +21,10 @@ pub trait PublicKey: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
     fn as_bytes(&self) -> &[u8];
 }
 
-pub trait Signature: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
+pub trait Signature<const N: usize>: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
     type PublicKey;
 
     fn verify(&self, msg: &[u8], pub_key: &Self::PublicKey) -> Result<(), CryptoError>;
 
-    fn to_bytes(&self) -> Vec<u8>;
+    fn to_bytes(&self) -> [u8; N];
 }

@@ -209,7 +209,7 @@ impl TryFrom<&[u8]> for Ed25519Signature {
     }
 }
 
-impl Signature for Ed25519Signature {
+impl Signature<64> for Ed25519Signature {
     type PublicKey = Ed25519PublicKey;
 
     fn verify(&self, msg: &[u8], pub_key: &Self::PublicKey) -> Result<(), CryptoError> {
@@ -225,8 +225,8 @@ impl Signature for Ed25519Signature {
         Ok(())
     }
 
-    fn to_bytes(&self) -> Vec<u8> {
-        self.0.to_bytes().to_vec()
+    fn to_bytes(&self) -> [u8; 64] {
+        self.0.to_bytes()
     }
 }
 
