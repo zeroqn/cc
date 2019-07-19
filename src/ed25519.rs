@@ -2,6 +2,7 @@
 // TODO: fixed size msg(msg is actually hash bytes)
 
 use crate::error::CryptoError;
+use crate::hash::Hash;
 use crate::traits::{PrivateKey, PublicKey, Signature};
 
 use curve25519_dalek::scalar::Scalar;
@@ -76,12 +77,12 @@ impl PrivateKey for Ed25519PrivateKey {
     type PublicKey = Ed25519PublicKey;
     type Signature = Ed25519Signature;
 
-    fn sign_message(&self, msg: &[u8]) -> Self::Signature {
+    fn sign_message(&self, msg: &Hash) -> Self::Signature {
         let secret_key = self.raw();
         let pub_key = self.pub_key();
 
         let expanded_secret_key = ed25519_dalek::ExpandedSecretKey::from(secret_key);
-        let sig = expanded_secret_key.sign(msg, pub_key.raw());
+        let sig = expanded_secret_key.sign(msg.as_ref(), pub_key.raw());
 
         Ed25519Signature(sig)
     }
@@ -150,7 +151,7 @@ impl TryFrom<&[u8]> for Ed25519PublicKey {
 impl PublicKey<32> for Ed25519PublicKey {
     type Signature = Ed25519Signature;
 
-    fn verify_signature(&self, msg: &[u8], sig: &Self::Signature) -> Result<(), CryptoError> {
+    fn verify_signature(&self, msg: &Hash, sig: &Self::Signature) -> Result<(), CryptoError> {
         sig.verify(msg, self)
     }
 
@@ -214,14 +215,14 @@ impl TryFrom<&[u8]> for Ed25519Signature {
 impl Signature<64> for Ed25519Signature {
     type PublicKey = Ed25519PublicKey;
 
-    fn verify(&self, msg: &[u8], pub_key: &Self::PublicKey) -> Result<(), CryptoError> {
+    fn verify(&self, msg: &Hash, pub_key: &Self::PublicKey) -> Result<(), CryptoError> {
         self.is_valid()?;
 
         let pub_key = pub_key.raw();
         let sig = self.raw();
 
         pub_key
-            .verify(msg, sig)
+            .verify(msg.as_ref(), sig)
             .map_err(|_| CryptoError::InvalidSignature)?;
 
         Ok(())
@@ -237,6 +238,7 @@ mod tests {
     use super::{Ed25519Keypair, Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature};
 
     use crate::error::CryptoError;
+    use crate::hash::Hash;
     use crate::traits::{PrivateKey, PublicKey, Signature};
 
     use curve25519_dalek::scalar::Scalar;
@@ -433,6 +435,15 @@ mod tests {
         }
     }
 
+    impl Hash {
+        fn from_bytes_unchecked(bytes: &[u8]) -> Hash {
+            let mut hash_bytes = [0u8; 32];
+            hash_bytes[..bytes.len()].copy_from_slice(bytes);
+
+            Hash::new(hash_bytes)
+        }
+    }
+
     #[test]
     fn should_generate_workable_keypair_from_crypto_rng() {
         let mut csprng = OsRng::new().unwrap();
@@ -441,11 +452,11 @@ mod tests {
         let pub_key = keypair.pub_key();
         let priv_key = keypair.priv_key();
 
-        let msg: &[u8] = b"the last night";
-        let sig = priv_key.sign_message(msg);
+        let msg = Hash::from_bytes_unchecked(b"the last night");
+        let sig = priv_key.sign_message(&msg);
 
-        assert!(pub_key.verify_signature(msg, &sig).is_ok());
-        assert!(sig.verify(msg, &pub_key).is_ok());
+        assert!(pub_key.verify_signature(&msg, &sig).is_ok());
+        assert!(sig.verify(&msg, &pub_key).is_ok());
     }
 
     #[test]
@@ -463,12 +474,12 @@ mod tests {
     }
 
     #[quickcheck]
-    fn prop_malleable_signature_should_not_pass(msg: Octet32, priv_key: Octet32) {
+    fn prop_malleable_signature_should_not_pass(msg: Hash, priv_key: Octet32) {
         let private_key = Ed25519PrivateKey::try_from(priv_key.as_ref()).unwrap();
         let pub_key = private_key.pub_key();
-        let sig = private_key.sign_message(msg.as_ref());
+        let sig = private_key.sign_message(&msg);
 
-        assert!(sig.verify(msg.as_ref(), &pub_key).is_ok());
+        assert!(sig.verify(&msg, &pub_key).is_ok());
 
         let mut s_bits: [u8; 32] = [0; 32];
         s_bits.copy_from_slice(&sig.to_bytes()[32..]);
@@ -505,7 +516,7 @@ mod tests {
 
         let modified_sig: Ed25519Signature =
             Ed25519Signature::from_bytes_unchecked(&modified_sig_bytes as &[u8]).unwrap();
-        assert!(modified_sig.verify(msg.as_ref(), &pub_key).is_err());
+        assert!(modified_sig.verify(&msg, &pub_key).is_err());
     }
 
     #[quickcheck]
@@ -524,20 +535,20 @@ mod tests {
     }
 
     #[quickcheck]
-    fn prop_signature_bytes_serialization(msg: Octet32, priv_key: Octet32) -> bool {
+    fn prop_signature_bytes_serialization(msg: Hash, priv_key: Octet32) -> bool {
         let private_key = Ed25519PrivateKey::try_from(priv_key.as_ref()).unwrap();
-        let sig = private_key.sign_message(msg.as_ref());
+        let sig = private_key.sign_message(&msg);
 
         ed25519_dalek::Signature::from_bytes(&sig.to_bytes()).is_ok()
     }
 
     #[quickcheck]
-    fn prop_message_sign_and_verify(msg: Octet32, priv_key: Octet32) -> bool {
+    fn prop_message_sign_and_verify(msg: Hash, priv_key: Octet32) -> bool {
         let private_key = Ed25519PrivateKey::try_from(priv_key.as_ref()).unwrap();
         let pub_key = private_key.pub_key();
-        let sig = private_key.sign_message(msg.as_ref());
+        let sig = private_key.sign_message(&msg);
 
-        assert!(sig.verify(msg.as_ref(), &pub_key).is_ok());
+        assert!(sig.verify(&msg, &pub_key).is_ok());
         pub_key.raw().verify(msg.as_ref(), sig.raw()).is_ok()
     }
 }
