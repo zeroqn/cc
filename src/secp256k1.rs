@@ -140,7 +140,7 @@ impl Signature<65> for Secp256k1Signature {
         let i32_id = rec_id.to_i32();
         assert!(i32_id >= 0 && i32_id <= 3);
 
-        bytes.copy_from_slice(&serialized[..COMPACT_SIGNATURE_SIZE]);
+        bytes[..COMPACT_SIGNATURE_SIZE].copy_from_slice(&serialized[..COMPACT_SIGNATURE_SIZE]);
         bytes[COMPACT_SIGNATURE_SIZE] = i32_id as u8;
 
         bytes
