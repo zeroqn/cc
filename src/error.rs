@@ -1,9 +1,9 @@
 #[derive(Debug, PartialEq)]
 pub enum CryptoError {
-    InvalidLengthError,
-    SmallSubgroupError,
-    InvalidSignatureError,
-    InvalidPublicKeyError,
-    InvalidPrivateKeyError,
-    InvalidMessage,
+    InvalidLength,
+    SmallSubgroup,
+    InvalidSignature,
+    InvalidPublicKey,
+    InvalidPrivateKey,
+    Other(&'static str),
 }
