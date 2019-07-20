@@ -73,7 +73,7 @@ impl TryFrom<&[u8]> for Ed25519PrivateKey {
     }
 }
 
-impl PrivateKey for Ed25519PrivateKey {
+impl PrivateKey<32> for Ed25519PrivateKey {
     type PublicKey = Ed25519PublicKey;
     type Signature = Ed25519Signature;
 
@@ -94,8 +94,8 @@ impl PrivateKey for Ed25519PrivateKey {
         Ed25519PublicKey(pub_key)
     }
 
-    fn as_bytes(&self) -> &[u8] {
-        self.0.as_bytes()
+    fn to_bytes(&self) -> [u8; 32] {
+        *self.0.as_bytes()
     }
 }
 

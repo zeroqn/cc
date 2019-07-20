@@ -3,7 +3,7 @@ use crate::hash::Hash;
 
 use std::convert::TryFrom;
 
-pub trait PrivateKey: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
+pub trait PrivateKey<const LENGTH: usize>: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
     type PublicKey;
     type Signature;
 
@@ -11,7 +11,7 @@ pub trait PrivateKey: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
 
     fn pub_key(&self) -> Self::PublicKey;
 
-    fn as_bytes(&self) -> &[u8];
+    fn to_bytes(&self) -> [u8; LENGTH];
 }
 
 pub trait PublicKey<const LENGTH: usize>: for<'a> TryFrom<&'a [u8], Error = CryptoError> {

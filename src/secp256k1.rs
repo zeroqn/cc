@@ -42,7 +42,7 @@ impl TryFrom<&[u8]> for Secp256k1PrivateKey {
     }
 }
 
-impl PrivateKey for Secp256k1PrivateKey {
+impl PrivateKey<32> for Secp256k1PrivateKey {
     type PublicKey = Secp256k1PublicKey;
     type Signature = Secp256k1Signature;
 
@@ -61,8 +61,11 @@ impl PrivateKey for Secp256k1PrivateKey {
         Secp256k1PublicKey { pub_key, engine }
     }
 
-    fn as_bytes(&self) -> &[u8] {
-        &self.secret_key[..]
+    fn to_bytes(&self) -> [u8; 32] {
+        let mut bytes = [0u8; 32];
+        bytes.copy_from_slice(&self.secret_key[..]);
+
+        bytes
     }
 }
 
