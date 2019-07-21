@@ -25,20 +25,39 @@ pub trait PrivateKey<const LENGTH: usize>: for<'a> TryFrom<&'a [u8], Error = Cry
     fn to_bytes(&self) -> [u8; LENGTH];
 }
 
-pub trait PublicKey<const LENGTH: usize>: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
-    type Signature;
+pub trait PublicKey<const LENGTH: usize, const SIG: usize>:
+    for<'a> TryFrom<&'a [u8], Error = CryptoError>
+{
+    type Signature: Signature<{ SIG }, { LENGTH }, PublicKey = Self>;
 
     fn verify_signature(&self, msg: &HashValue, sig: &Self::Signature) -> Result<(), CryptoError>;
 
     fn to_bytes(&self) -> [u8; LENGTH];
 }
 
-pub trait Signature<const LENGTH: usize>: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
-    type PublicKey;
+pub trait Signature<const LENGTH: usize, const PK: usize>:
+    for<'a> TryFrom<&'a [u8], Error = CryptoError>
+{
+    type PublicKey: PublicKey<{ PK }, { LENGTH }, Signature = Self>;
 
     fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), CryptoError>;
 
     fn to_bytes(&self) -> [u8; LENGTH];
+}
+
+pub trait Crypto<const SK: usize, const PK: usize, const SIG: usize> {
+    type PrivateKey: PrivateKey<{ SK }>;
+    type PublicKey: PublicKey<{ PK }, { SIG }, Signature = Self::Signature>;
+    type Signature: Signature<{ SIG }, { PK }, PublicKey = Self::PublicKey>;
+
+    fn verify_signature(msg: &[u8], sig: &[u8], pub_key: &[u8]) -> Result<(), CryptoError> {
+        let msg = HashValue::try_from(msg)?;
+        let sig = Self::Signature::try_from(sig)?;
+        let pub_key = Self::PublicKey::try_from(pub_key)?;
+
+        sig.verify(&msg, &pub_key)?;
+        Ok(())
+    }
 }
 
 #[cfg(feature = "proptest")]

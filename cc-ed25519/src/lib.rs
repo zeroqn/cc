@@ -1,6 +1,6 @@
 // TODO: documents
 
-use cc::{CryptoError, HashValue, PrivateKey, PublicKey, Signature};
+use cc::{Crypto, CryptoError, HashValue, PrivateKey, PublicKey, Signature};
 use cc_derive::SecretDebug;
 
 use curve25519_dalek::scalar::Scalar;
@@ -16,6 +16,14 @@ pub struct Ed25519PublicKey(ed25519_dalek::PublicKey);
 
 #[derive(Debug, PartialEq)]
 pub struct Ed25519Signature(ed25519_dalek::Signature);
+
+pub struct Ed25519;
+
+impl Crypto<32, 32, 64> for Ed25519 {
+    type PrivateKey = Ed25519PrivateKey;
+    type PublicKey = Ed25519PublicKey;
+    type Signature = Ed25519Signature;
+}
 
 pub fn generate_keypair<R: CryptoRng + Rng + ?Sized>(
     mut rng: &mut R,
@@ -116,7 +124,7 @@ impl TryFrom<&[u8]> for Ed25519PublicKey {
     }
 }
 
-impl PublicKey<32> for Ed25519PublicKey {
+impl PublicKey<32, 64> for Ed25519PublicKey {
     type Signature = Ed25519Signature;
 
     fn verify_signature(&self, msg: &HashValue, sig: &Self::Signature) -> Result<(), CryptoError> {
@@ -176,7 +184,7 @@ impl TryFrom<&[u8]> for Ed25519Signature {
     }
 }
 
-impl Signature<64> for Ed25519Signature {
+impl Signature<64, 32> for Ed25519Signature {
     type PublicKey = Ed25519PublicKey;
 
     fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), CryptoError> {

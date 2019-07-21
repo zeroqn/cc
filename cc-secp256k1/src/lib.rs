@@ -1,14 +1,14 @@
-use cc::{CryptoError, HashValue, PrivateKey, PublicKey, Signature};
+use cc::{Crypto, CryptoError, HashValue, PrivateKey, PublicKey, Signature};
 use cc_derive::SecretDebug;
 
 use lazy_static::lazy_static;
 use rand::{CryptoRng, Rng};
-use secp256k1::{All, Message, Secp256k1, ThirtyTwoByteHash};
+use secp256k1::{All, Message, ThirtyTwoByteHash};
 
 use std::convert::TryFrom;
 
 lazy_static! {
-    static ref ENGINE: Secp256k1<All> = Secp256k1::new();
+    static ref ENGINE: secp256k1::Secp256k1<All> = secp256k1::Secp256k1::new();
 }
 
 #[derive(SecretDebug, PartialEq)]
@@ -24,6 +24,14 @@ pub struct Secp256k1Signature(secp256k1::Signature);
 pub struct Secp256k1Error(secp256k1::Error);
 
 pub struct HashedMessage<'a>(&'a HashValue);
+
+pub struct Secp256k1;
+
+impl Crypto<32, 33, 64> for Secp256k1 {
+    type PrivateKey = Secp256k1PrivateKey;
+    type PublicKey = Secp256k1PublicKey;
+    type Signature = Secp256k1Signature;
+}
 
 pub fn generate_keypair<R: CryptoRng + Rng + ?Sized>(
     rng: &mut R,
@@ -89,7 +97,7 @@ impl TryFrom<&[u8]> for Secp256k1PublicKey {
     }
 }
 
-impl PublicKey<33> for Secp256k1PublicKey {
+impl PublicKey<33, 64> for Secp256k1PublicKey {
     type Signature = Secp256k1Signature;
 
     fn verify_signature(&self, msg: &HashValue, sig: &Self::Signature) -> Result<(), CryptoError> {
@@ -121,7 +129,7 @@ impl TryFrom<&[u8]> for Secp256k1Signature {
     }
 }
 
-impl Signature<64> for Secp256k1Signature {
+impl Signature<64, 33> for Secp256k1Signature {
     type PublicKey = Secp256k1PublicKey;
 
     fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), CryptoError> {
