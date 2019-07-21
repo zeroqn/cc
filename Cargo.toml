@@ -6,4 +6,5 @@ members = [
   "cc-ed25519",
   "cc-quickcheck-types",
   "cc-derive",
+  "cc-sm2",
 ]
