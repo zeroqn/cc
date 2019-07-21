@@ -1,4 +1,5 @@
 use cc::{CryptoError, HashValue, PrivateKey, PublicKey, Signature};
+use cc_derive::SecretDebug;
 
 use lazy_static::lazy_static;
 use rand::{CryptoRng, Rng};
@@ -10,10 +11,13 @@ lazy_static! {
     static ref ENGINE: Secp256k1<All> = Secp256k1::new();
 }
 
+#[derive(SecretDebug, PartialEq)]
 pub struct Secp256k1PrivateKey(secp256k1::SecretKey);
 
+#[derive(Debug, PartialEq)]
 pub struct Secp256k1PublicKey(secp256k1::PublicKey);
 
+#[derive(Debug, PartialEq)]
 pub struct Secp256k1Signature(secp256k1::Signature);
 
 #[derive(Debug, PartialEq)]
@@ -174,14 +178,31 @@ impl<'a> ThirtyTwoByteHash for HashedMessage<'a> {
 
 #[cfg(test)]
 mod tests {
-    use super::generate_keypair;
+    use super::{generate_keypair, Secp256k1PrivateKey, Secp256k1PublicKey, Secp256k1Signature};
 
-    use cc::{HashValue, PrivateKey, Signature};
+    use cc::{HashValue, PrivateKey, PublicKey, Signature};
+    use cc_quickcheck_types::Octet32;
 
+    use quickcheck::{Arbitrary, Gen};
+    use quickcheck_macros::quickcheck;
     use rand::rngs::OsRng;
     use sha2::{Digest, Sha256};
 
     use std::convert::TryFrom;
+
+    impl Clone for Secp256k1PrivateKey {
+        fn clone(&self) -> Self {
+            Self::try_from(self.to_bytes().as_ref()).unwrap()
+        }
+    }
+
+    impl Arbitrary for Secp256k1PrivateKey {
+        fn arbitrary<G: Gen>(g: &mut G) -> Secp256k1PrivateKey {
+            let octet32 = Octet32::arbitrary(g);
+
+            Secp256k1PrivateKey::try_from(octet32.as_ref()).unwrap()
+        }
+    }
 
     #[test]
     fn should_generate_workable_keypair_from_crypto_rng() {
@@ -196,5 +217,32 @@ mod tests {
 
         let sig = priv_key.sign_message(&msg);
         assert!(sig.verify(&msg, &pub_key).is_ok());
+    }
+
+    #[quickcheck]
+    fn prop_private_key_bytes_serialization(priv_key: Secp256k1PrivateKey) -> bool {
+        Secp256k1PrivateKey::try_from(priv_key.to_bytes().as_ref()) == Ok(priv_key)
+    }
+
+    #[quickcheck]
+    fn prop_public_key_bytes_serialization(priv_key: Secp256k1PrivateKey) -> bool {
+        let pub_key = priv_key.pub_key();
+
+        Secp256k1PublicKey::try_from(pub_key.to_bytes().as_ref()) == Ok(pub_key)
+    }
+
+    #[quickcheck]
+    fn prop_signature_bytes_serialization(msg: HashValue, priv_key: Secp256k1PrivateKey) -> bool {
+        let sig = priv_key.sign_message(&msg);
+
+        Secp256k1Signature::try_from(sig.to_bytes().as_ref()) == Ok(sig)
+    }
+
+    #[quickcheck]
+    fn prop_message_sign_and_verify(msg: HashValue, priv_key: Secp256k1PrivateKey) -> bool {
+        let pub_key = priv_key.pub_key();
+        let sig = priv_key.sign_message(&msg);
+
+        sig.verify(&msg, &pub_key).is_ok()
     }
 }

@@ -7,6 +7,7 @@ license = "MIT"
 
 [dependencies]
 cc = { path = "../cc" }
+cc-derive = { path = "../cc-derive" }
 
 secp256k1 = { version = "0.14", features = [ "rand" ] }
 lazy_static = "1.3"
@@ -14,6 +15,7 @@ rand = "0.6"
 
 [dev-dependencies]
 cc = { path = "../cc", features = [ "proptest" ] }
+cc-quickcheck-types = { path = "../cc-quickcheck-types" }
 
 sha2 = "0.8"
 quickcheck = "0.8"
