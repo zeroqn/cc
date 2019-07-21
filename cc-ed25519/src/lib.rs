@@ -4,10 +4,9 @@ use cc::{CryptoError, HashValue, PrivateKey, PublicKey, Signature};
 use cc_derive::SecretDebug;
 
 use curve25519_dalek::scalar::Scalar;
+use rand::{CryptoRng, Rng};
 
 use std::convert::TryFrom;
-
-pub struct Ed25519Keypair(ed25519_dalek::Keypair);
 
 #[derive(SecretDebug)]
 pub struct Ed25519PrivateKey(ed25519_dalek::SecretKey);
@@ -18,37 +17,15 @@ pub struct Ed25519PublicKey(ed25519_dalek::PublicKey);
 #[derive(Debug, PartialEq)]
 pub struct Ed25519Signature(ed25519_dalek::Signature);
 
-//
-// Keypair impl
-//
+pub fn generate_keypair<R: CryptoRng + Rng + ?Sized>(
+    mut rng: &mut R,
+) -> (Ed25519PrivateKey, Ed25519PublicKey) {
+    let keypair = ed25519_dalek::Keypair::generate(&mut rng);
 
-impl Ed25519Keypair {
-    pub fn generate<R>(mut csprng: &mut R) -> Self
-    where
-        R: rand::CryptoRng + rand::Rng,
-    {
-        let keypair = ed25519_dalek::Keypair::generate(&mut csprng);
+    let pub_key = Ed25519PublicKey(keypair.public);
+    let priv_key = Ed25519PrivateKey(keypair.secret);
 
-        Ed25519Keypair(keypair)
-    }
-
-    pub fn pub_key(&self) -> Ed25519PublicKey {
-        Ed25519PublicKey(self.raw().public)
-    }
-
-    pub fn priv_key(self) -> Ed25519PrivateKey {
-        self.into()
-    }
-
-    fn raw(&self) -> &ed25519_dalek::Keypair {
-        &self.0
-    }
-}
-
-impl Into<Ed25519PrivateKey> for Ed25519Keypair {
-    fn into(self) -> Ed25519PrivateKey {
-        Ed25519PrivateKey(self.0.secret)
-    }
+    (priv_key, pub_key)
 }
 
 //
@@ -220,7 +197,7 @@ impl Signature<64> for Ed25519Signature {
 
 #[cfg(test)]
 mod tests {
-    use super::{Ed25519Keypair, Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature};
+    use super::{generate_keypair, Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature};
 
     use cc::{CryptoError, HashValue, PrivateKey, PublicKey, Signature};
     use cc_quickcheck_types::Octet32;
@@ -414,10 +391,7 @@ mod tests {
     #[test]
     fn should_generate_workable_keypair_from_crypto_rng() {
         let mut csprng = OsRng::new().unwrap();
-        let keypair = Ed25519Keypair::generate(&mut csprng);
-
-        let pub_key = keypair.pub_key();
-        let priv_key = keypair.priv_key();
+        let (priv_key, pub_key) = generate_keypair(&mut csprng);
 
         let msg = {
             let mut bytes = [0u8; 32];
