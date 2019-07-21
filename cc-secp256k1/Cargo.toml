@@ -15,7 +15,6 @@ rand = "0.6"
 
 [dev-dependencies]
 cc = { path = "../cc", features = [ "proptest" ] }
-cc-quickcheck-types = { path = "../cc-quickcheck-types" }
 
 sha2 = "0.8"
 quickcheck = "0.8"

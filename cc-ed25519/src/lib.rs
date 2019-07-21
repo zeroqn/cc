@@ -199,11 +199,9 @@ impl Signature<64> for Ed25519Signature {
 mod tests {
     use super::{generate_keypair, Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature};
 
-    use cc::{CryptoError, HashValue, PrivateKey, PublicKey, Signature};
-    use cc_quickcheck_types::Octet32;
+    use cc::{impl_quickcheck_arbitrary, CryptoError, HashValue, PrivateKey, PublicKey, Signature};
 
     use curve25519_dalek::scalar::Scalar;
-    use quickcheck::{Arbitrary, Gen};
     use quickcheck_macros::quickcheck;
     use rand::rngs::OsRng;
 
@@ -365,19 +363,7 @@ mod tests {
         ],
     ];
 
-    impl Clone for Ed25519PrivateKey {
-        fn clone(&self) -> Self {
-            Self::try_from(self.0.as_ref()).unwrap()
-        }
-    }
-
-    impl Arbitrary for Ed25519PrivateKey {
-        fn arbitrary<G: Gen>(g: &mut G) -> Ed25519PrivateKey {
-            let octet32 = Octet32::arbitrary(g);
-
-            Ed25519PrivateKey::try_from(octet32.as_ref()).unwrap()
-        }
-    }
+    impl_quickcheck_arbitrary!(Ed25519PrivateKey);
 
     impl Ed25519Signature {
         fn from_bytes_unchecked(bytes: &[u8]) -> Result<Ed25519Signature, CryptoError> {

@@ -180,29 +180,15 @@ impl<'a> ThirtyTwoByteHash for HashedMessage<'a> {
 mod tests {
     use super::{generate_keypair, Secp256k1PrivateKey, Secp256k1PublicKey, Secp256k1Signature};
 
-    use cc::{HashValue, PrivateKey, PublicKey, Signature};
-    use cc_quickcheck_types::Octet32;
+    use cc::{impl_quickcheck_arbitrary, HashValue, PrivateKey, PublicKey, Signature};
 
-    use quickcheck::{Arbitrary, Gen};
     use quickcheck_macros::quickcheck;
     use rand::rngs::OsRng;
     use sha2::{Digest, Sha256};
 
     use std::convert::TryFrom;
 
-    impl Clone for Secp256k1PrivateKey {
-        fn clone(&self) -> Self {
-            Self::try_from(self.to_bytes().as_ref()).unwrap()
-        }
-    }
-
-    impl Arbitrary for Secp256k1PrivateKey {
-        fn arbitrary<G: Gen>(g: &mut G) -> Secp256k1PrivateKey {
-            let octet32 = Octet32::arbitrary(g);
-
-            Secp256k1PrivateKey::try_from(octet32.as_ref()).unwrap()
-        }
-    }
+    impl_quickcheck_arbitrary!(Secp256k1PrivateKey);
 
     #[test]
     fn should_generate_workable_keypair_from_crypto_rng() {

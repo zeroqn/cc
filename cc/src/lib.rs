@@ -40,3 +40,26 @@ pub trait Signature<const LENGTH: usize>: for<'a> TryFrom<&'a [u8], Error = Cryp
 
     fn to_bytes(&self) -> [u8; LENGTH];
 }
+
+#[cfg(feature = "proptest")]
+pub use cc_quickcheck_types::Octet32;
+
+#[cfg(feature = "proptest")]
+#[macro_export]
+macro_rules! impl_quickcheck_arbitrary {
+    ($priv_key:ident) => {
+        impl Clone for $priv_key {
+            fn clone(&self) -> Self {
+                Self::try_from(self.to_bytes().as_ref()).unwrap()
+            }
+        }
+
+        impl quickcheck::Arbitrary for $priv_key {
+            fn arbitrary<G: quickcheck::Gen>(g: &mut G) -> $priv_key {
+                let octet32 = cc::Octet32::arbitrary(g);
+
+                $priv_key::try_from(octet32.as_ref()).unwrap()
+            }
+        }
+    };
+}
