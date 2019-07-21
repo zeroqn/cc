@@ -1,7 +1,18 @@
-use crate::error::CryptoError;
-use crate::hash::Hash;
+#![feature(const_generics)]
+
+pub mod hash;
+pub use hash::Hash;
 
 use std::convert::TryFrom;
+
+#[derive(Debug, PartialEq)]
+pub enum CryptoError {
+    InvalidLength,
+    InvalidSignature,
+    InvalidPublicKey,
+    InvalidPrivateKey,
+    Other(&'static str),
+}
 
 pub trait PrivateKey<const LENGTH: usize>: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
     type PublicKey;

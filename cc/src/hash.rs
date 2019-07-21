@@ -1,18 +1,13 @@
-use crate::error::CryptoError;
+use crate::CryptoError;
 
 use std::convert::TryFrom;
 
-const LENGTH: usize = 32;
+pub const LENGTH: usize = 32;
 
-// TODO: generic?
 #[derive(Clone, Debug)]
 pub struct Hash([u8; LENGTH]);
 
 impl Hash {
-    pub(crate) fn new(bytes: [u8; LENGTH]) -> Self {
-        Hash(bytes)
-    }
-
     pub fn to_bytes(&self) -> [u8; LENGTH] {
         self.0
     }

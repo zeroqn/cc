@@ -1,17 +1,7 @@
-[package]
-name = "crypto"
-version = "0.1.0"
-authors = ["zero.qn zeroqn@outlook.com"]
-edition = "2018"
-license = "MIT"
+[workspace]
 
-[dependencies]
-ed25519-dalek = { version = "1.0.0-pre.1", features = [ "asm" ] }
-curve25519-dalek = "1.2"
-# ed25519 requires rand 0.6
-rand = "0.6"
-secp256k1 = { version = "0.14" }
-
-[dev-dependencies]
-quickcheck = "0.8"
-quickcheck_macros = "0.8"
+members = [
+  "cc",
+  "cc-secp256k1",
+  "cc-ed25519",
+]

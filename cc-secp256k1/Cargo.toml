@@ -1,0 +1,15 @@
+[package]
+name = "cc-secp256k1"
+version = "0.1.0"
+authors = ["zero.qn <zero.qn@outlook.com>"]
+edition = "2018"
+license = "MIT"
+
+[dependencies]
+cc = { path = "../cc" }
+
+secp256k1 = { version = "0.14" }
+
+[dev-dependencies]
+quickcheck = "0.8"
+quickcheck_macros = "0.8"
