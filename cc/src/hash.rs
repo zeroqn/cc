@@ -34,26 +34,26 @@ impl AsRef<[u8]> for Hash {
     }
 }
 
+#[cfg(any(test, feature = "proptest"))]
+impl quickcheck::Arbitrary for Hash {
+    fn arbitrary<G: quickcheck::Gen>(g: &mut G) -> Hash {
+        let mut hash = [0u8; 32];
+
+        for byte in &mut hash {
+            *byte = u8::arbitrary(g);
+        }
+
+        Hash(hash)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::Hash;
 
-    use quickcheck::{Arbitrary, Gen};
     use quickcheck_macros::quickcheck;
 
     use std::convert::TryFrom;
-
-    impl Arbitrary for Hash {
-        fn arbitrary<G: Gen>(g: &mut G) -> Hash {
-            let mut hash = [0u8; 32];
-
-            for byte in &mut hash {
-                *byte = u8::arbitrary(g);
-            }
-
-            Hash(hash)
-        }
-    }
 
     #[quickcheck]
     fn prop_hash_bytes(hash: Hash) {

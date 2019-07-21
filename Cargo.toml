@@ -4,4 +4,5 @@ members = [
   "cc",
   "cc-secp256k1",
   "cc-ed25519",
+  "cc-quickcheck-types",
 ]

@@ -234,6 +234,7 @@ mod tests {
     use super::{Ed25519Keypair, Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature};
 
     use cc::{CryptoError, Hash, PrivateKey, PublicKey, Signature};
+    use cc_quickcheck_types::Octet32;
 
     use curve25519_dalek::scalar::Scalar;
     use quickcheck::{Arbitrary, Gen};
@@ -398,28 +399,6 @@ mod tests {
         ],
     ];
 
-    // TODO: SeedableRng?
-    #[derive(Clone, Debug)]
-    struct Octet32([u8; 32]);
-
-    impl AsRef<[u8]> for Octet32 {
-        fn as_ref(&self) -> &[u8] {
-            &self.0
-        }
-    }
-
-    impl Arbitrary for Octet32 {
-        fn arbitrary<G: Gen>(g: &mut G) -> Octet32 {
-            let mut octet32 = [0u8; 32];
-
-            for octet in &mut octet32 {
-                *octet = u8::arbitrary(g);
-            }
-
-            Octet32(octet32)
-        }
-    }
-
     impl Ed25519Signature {
         fn from_bytes_unchecked(bytes: &[u8]) -> Result<Ed25519Signature, CryptoError> {
             let sig = ed25519_dalek::Signature::from_bytes(bytes)
@@ -465,8 +444,7 @@ mod tests {
     }
 
     #[quickcheck]
-    fn prop_malleable_signature_should_not_pass(msg: Octet32, priv_key: Octet32) {
-        let msg = Hash::try_from(msg.as_ref()).unwrap();
+    fn prop_malleable_signature_should_not_pass(msg: Hash, priv_key: Octet32) {
         let private_key = Ed25519PrivateKey::try_from(priv_key.as_ref()).unwrap();
 
         let pub_key = private_key.pub_key();
@@ -528,8 +506,7 @@ mod tests {
     }
 
     #[quickcheck]
-    fn prop_signature_bytes_serialization(msg: Octet32, priv_key: Octet32) -> bool {
-        let msg = Hash::try_from(msg.as_ref()).unwrap();
+    fn prop_signature_bytes_serialization(msg: Hash, priv_key: Octet32) -> bool {
         let private_key = Ed25519PrivateKey::try_from(priv_key.as_ref()).unwrap();
 
         let sig = private_key.sign_message(&msg);
@@ -537,8 +514,7 @@ mod tests {
     }
 
     #[quickcheck]
-    fn prop_message_sign_and_verify(msg: Octet32, priv_key: Octet32) -> bool {
-        let msg = Hash::try_from(msg.as_ref()).unwrap();
+    fn prop_message_sign_and_verify(msg: Hash, priv_key: Octet32) -> bool {
         let private_key = Ed25519PrivateKey::try_from(priv_key.as_ref()).unwrap();
 
         let pub_key = private_key.pub_key();
