@@ -23,7 +23,7 @@ pub struct Ed25519Signature(ed25519_dalek::Signature);
 
 pub struct Ed25519;
 
-impl Crypto<32, 32, 64> for Ed25519 {
+impl Crypto<32, 32> for Ed25519 {
     type PrivateKey = Ed25519PrivateKey;
     type PublicKey = Ed25519PublicKey;
     type Signature = Ed25519Signature;
@@ -192,7 +192,7 @@ impl TryFrom<&[u8]> for Ed25519Signature {
     }
 }
 
-impl Signature<64> for Ed25519Signature {
+impl Signature for Ed25519Signature {
     type PublicKey = Ed25519PublicKey;
 
     fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), CryptoError> {
@@ -206,8 +206,8 @@ impl Signature<64> for Ed25519Signature {
         Ok(())
     }
 
-    fn to_bytes(&self) -> [u8; 64] {
-        self.0.to_bytes()
+    fn to_bytes(&self) -> Vec<u8> {
+        self.0.to_bytes().to_vec()
     }
 }
 

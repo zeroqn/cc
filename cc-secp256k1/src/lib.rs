@@ -31,7 +31,7 @@ pub struct HashedMessage<'a>(&'a HashValue);
 
 pub struct Secp256k1;
 
-impl Crypto<32, 33, 64> for Secp256k1 {
+impl Crypto<32, 33> for Secp256k1 {
     type PrivateKey = Secp256k1PrivateKey;
     type PublicKey = Secp256k1PublicKey;
     type Signature = Secp256k1Signature;
@@ -131,7 +131,7 @@ impl TryFrom<&[u8]> for Secp256k1Signature {
     }
 }
 
-impl Signature<64> for Secp256k1Signature {
+impl Signature for Secp256k1Signature {
     type PublicKey = Secp256k1PublicKey;
 
     fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), CryptoError> {
@@ -144,8 +144,8 @@ impl Signature<64> for Secp256k1Signature {
         Ok(())
     }
 
-    fn to_bytes(&self) -> [u8; 64] {
-        self.0.serialize_compact()
+    fn to_bytes(&self) -> Vec<u8> {
+        self.0.serialize_compact().to_vec()
     }
 }
 

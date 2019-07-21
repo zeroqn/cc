@@ -37,18 +37,19 @@ pub trait PublicKey<const LEN: usize>: for<'a> TryFrom<&'a [u8], Error = CryptoE
     fn to_bytes(&self) -> [u8; LEN];
 }
 
-pub trait Signature<const LEN: usize>: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
+pub trait Signature: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
     type PublicKey;
 
     fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), CryptoError>;
 
-    fn to_bytes(&self) -> [u8; LEN];
+    // TODO: Sm2 signature is not fixed size
+    fn to_bytes(&self) -> Vec<u8>;
 }
 
-pub trait Crypto<const SK: usize, const PK: usize, const SIG: usize> {
+pub trait Crypto<const SK: usize, const PK: usize> {
     type PrivateKey: PrivateKey<{ SK }, PublicKey = Self::PublicKey, Signature = Self::Signature>;
     type PublicKey: PublicKey<{ PK }, Signature = Self::Signature>;
-    type Signature: Signature<{ SIG }, PublicKey = Self::PublicKey>;
+    type Signature: Signature<PublicKey = Self::PublicKey>;
 
     #[cfg(feature = "generate")]
     fn generate_keypair<R: CryptoRng + Rng + ?Sized>(

@@ -19,7 +19,7 @@ pub struct SM2Signature(sm2::Signature);
 
 pub struct Sm2;
 
-impl Crypto<32, 33, 71> for Sm2 {
+impl Crypto<32, 33> for Sm2 {
     type PrivateKey = SM2PrivateKey;
     type PublicKey = SM2PublicKey;
     type Signature = SM2Signature;
@@ -127,7 +127,7 @@ impl TryFrom<&[u8]> for SM2Signature {
     }
 }
 
-impl Signature<71> for SM2Signature {
+impl Signature for SM2Signature {
     type PublicKey = SM2PublicKey;
 
     fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), CryptoError> {
@@ -138,15 +138,8 @@ impl Signature<71> for SM2Signature {
         Ok(())
     }
 
-    fn to_bytes(&self) -> [u8; 71] {
-        let mut bytes = [0u8; 71];
-        let vec_bytes = self.0.der_encode();
-
-        println!("sig: {:?}", vec_bytes);
-        assert_eq!(vec_bytes.len(), 71);
-        bytes.copy_from_slice(&vec_bytes.as_slice()[..71]);
-
-        bytes
+    fn to_bytes(&self) -> Vec<u8> {
+        self.0.der_encode()
     }
 }
 
