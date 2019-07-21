@@ -145,11 +145,11 @@ impl From<Secp256k1Error> for CryptoError {
 
         match err.0 {
             Error::IncorrectSignature => CryptoError::InvalidSignature,
-            Error::InvalidMessage => CryptoError::InvalidLength,
             Error::InvalidPublicKey => CryptoError::InvalidPublicKey,
             Error::InvalidSignature => CryptoError::InvalidSignature,
             Error::InvalidSecretKey => CryptoError::InvalidPrivateKey,
             Error::InvalidRecoveryId => CryptoError::InvalidSignature,
+            Error::InvalidMessage => CryptoError::Other("secp256k1: invalid messag"),
             Error::InvalidTweak => CryptoError::Other("secp256k1: bad tweak"),
             Error::NotEnoughMemory => CryptoError::Other("secp256k1: not enough memory"),
         }
