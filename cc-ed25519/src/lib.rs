@@ -127,10 +127,6 @@ impl TryFrom<&[u8]> for Ed25519PublicKey {
 impl PublicKey<32> for Ed25519PublicKey {
     type Signature = Ed25519Signature;
 
-    fn verify_signature(&self, msg: &HashValue, sig: &Self::Signature) -> Result<(), CryptoError> {
-        sig.verify(msg, self)
-    }
-
     fn to_bytes(&self) -> [u8; 32] {
         *self.0.as_bytes()
     }
@@ -396,7 +392,6 @@ mod tests {
         };
 
         let sig = priv_key.sign_message(&msg);
-        assert!(pub_key.verify_signature(&msg, &sig).is_ok());
         assert!(sig.verify(&msg, &pub_key).is_ok());
     }
 

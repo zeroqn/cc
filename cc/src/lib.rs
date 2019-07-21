@@ -28,8 +28,6 @@ pub trait PrivateKey<const LEN: usize>: for<'a> TryFrom<&'a [u8], Error = Crypto
 pub trait PublicKey<const LEN: usize>: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
     type Signature;
 
-    fn verify_signature(&self, msg: &HashValue, sig: &Self::Signature) -> Result<(), CryptoError>;
-
     fn to_bytes(&self) -> [u8; LEN];
 }
 

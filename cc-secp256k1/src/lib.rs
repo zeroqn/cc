@@ -100,16 +100,6 @@ impl TryFrom<&[u8]> for Secp256k1PublicKey {
 impl PublicKey<33> for Secp256k1PublicKey {
     type Signature = Secp256k1Signature;
 
-    fn verify_signature(&self, msg: &HashValue, sig: &Self::Signature) -> Result<(), CryptoError> {
-        let msg = Message::from(HashedMessage(msg));
-
-        ENGINE
-            .verify(&msg, &sig.0, &self.0)
-            .map_err(Secp256k1Error)?;
-
-        Ok(())
-    }
-
     fn to_bytes(&self) -> [u8; 33] {
         self.0.serialize()
     }
