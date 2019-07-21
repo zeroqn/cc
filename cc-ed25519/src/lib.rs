@@ -124,7 +124,7 @@ impl TryFrom<&[u8]> for Ed25519PublicKey {
     }
 }
 
-impl PublicKey<32, 64> for Ed25519PublicKey {
+impl PublicKey<32> for Ed25519PublicKey {
     type Signature = Ed25519Signature;
 
     fn verify_signature(&self, msg: &HashValue, sig: &Self::Signature) -> Result<(), CryptoError> {
@@ -184,7 +184,7 @@ impl TryFrom<&[u8]> for Ed25519Signature {
     }
 }
 
-impl Signature<64, 32> for Ed25519Signature {
+impl Signature<64> for Ed25519Signature {
     type PublicKey = Ed25519PublicKey;
 
     fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), CryptoError> {

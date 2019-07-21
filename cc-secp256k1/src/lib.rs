@@ -97,7 +97,7 @@ impl TryFrom<&[u8]> for Secp256k1PublicKey {
     }
 }
 
-impl PublicKey<33, 64> for Secp256k1PublicKey {
+impl PublicKey<33> for Secp256k1PublicKey {
     type Signature = Secp256k1Signature;
 
     fn verify_signature(&self, msg: &HashValue, sig: &Self::Signature) -> Result<(), CryptoError> {
@@ -129,7 +129,7 @@ impl TryFrom<&[u8]> for Secp256k1Signature {
     }
 }
 
-impl Signature<64, 33> for Secp256k1Signature {
+impl Signature<64> for Secp256k1Signature {
     type PublicKey = Secp256k1PublicKey;
 
     fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), CryptoError> {
