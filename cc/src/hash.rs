@@ -18,7 +18,7 @@ impl TryFrom<&[u8]> for Hash {
 
     fn try_from(bytes: &[u8]) -> Result<Hash, Self::Error> {
         if bytes.len() != LENGTH {
-            Err(CryptoError::InvalidLength)?
+            return Err(CryptoError::InvalidLength);
         }
 
         let mut hash_bytes = [0u8; LENGTH];
@@ -35,21 +35,18 @@ impl AsRef<[u8]> for Hash {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::Hash;
+use quickcheck::{Arbitrary, Gen};
 
-    use quickcheck::{Arbitrary, Gen};
+#[cfg(test)]
+// TODO: SeedableRng
+impl Arbitrary for Hash {
+    fn arbitrary<G: Gen>(g: &mut G) -> Hash {
+        let mut hash = [0u8; 32];
 
-    // TODO: SeedableRng
-    impl Arbitrary for Hash {
-        fn arbitrary<G: Gen>(g: &mut G) -> Hash {
-            let mut hash = [0u8; 32];
-
-            for i in 0..32 {
-                hash[i] = u8::arbitrary(g);
-            }
-
-            Hash(hash)
+        for byte in &mut hash {
+            *byte = u8::arbitrary(g);
         }
+
+        Hash(hash)
     }
 }

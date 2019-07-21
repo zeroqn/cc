@@ -116,7 +116,7 @@ impl Ed25519PublicKey {
             .ok_or(CryptoError::InvalidPublicKey)?;
 
         if point.is_small_order() {
-            Err(CryptoError::Other("ed25519: small subgroup"))?;
+            return Err(CryptoError::Other("ed25519: small subgroup"));
         }
 
         Ok(())
@@ -182,7 +182,7 @@ impl Ed25519Signature {
             .ok_or(CryptoError::InvalidSignature)?;
 
         if point.is_small_order() {
-            Err(CryptoError::Other("ed25519: small subgroup"))?;
+            return Err(CryptoError::Other("ed25519: small subgroup"));
         }
 
         Ok(())
@@ -195,7 +195,7 @@ impl TryFrom<&[u8]> for Ed25519Signature {
 
     fn try_from(bytes: &[u8]) -> Result<Ed25519Signature, Self::Error> {
         if bytes.len() != ed25519_dalek::SIGNATURE_LENGTH {
-            Err(CryptoError::InvalidLength)?;
+            return Err(CryptoError::InvalidLength);
         }
 
         let dalek_sig = ed25519_dalek::Signature::from_bytes(bytes)
@@ -247,11 +247,11 @@ mod tests {
     // from curve25519_dalek/src/backend/serial/u64
     /// `L` is the order of base point, i.e. 2^252 + 27742317777372353535851937790883648493
     const L: Scalar52 = Scalar52([
-        0x0002631a5cf5d3ed,
-        0x000dea2f79cd6581,
-        0x000000000014def9,
-        0x0000000000000000,
-        0x0000100000000000,
+        0x0002_631a_5cf5_d3ed,
+        0x000d_ea2f_79cd_6581,
+        0x0000_0000_0014_def9,
+        0x0000_0000_0000_0000,
+        0x0000_1000_0000_0000,
     ]);
 
     /// The `Scalar52` struct represents an element in
@@ -289,7 +289,7 @@ mod tests {
             let mut words = [0u64; 4];
             for i in 0..4 {
                 for j in 0..8 {
-                    words[i] |= (bytes[(i * 8) + j] as u64) << (j * 8);
+                    words[i] |= u64::from(bytes[(i * 8) + j]) << (j * 8);
                 }
             }
 
@@ -310,7 +310,7 @@ mod tests {
         pub fn to_bytes(&self) -> [u8; 32] {
             let mut s = [0u8; 32];
 
-            s[0] = (self.0[0] >> 0) as u8;
+            s[0] = self.0[0] as u8;
             s[1] = (self.0[0] >> 8) as u8;
             s[2] = (self.0[0] >> 16) as u8;
             s[3] = (self.0[0] >> 24) as u8;
@@ -323,7 +323,7 @@ mod tests {
             s[10] = (self.0[1] >> 28) as u8;
             s[11] = (self.0[1] >> 36) as u8;
             s[12] = (self.0[1] >> 44) as u8;
-            s[13] = (self.0[2] >> 0) as u8;
+            s[13] = self.0[2] as u8;
             s[14] = (self.0[2] >> 8) as u8;
             s[15] = (self.0[2] >> 16) as u8;
             s[16] = (self.0[2] >> 24) as u8;
@@ -336,7 +336,7 @@ mod tests {
             s[23] = (self.0[3] >> 28) as u8;
             s[24] = (self.0[3] >> 36) as u8;
             s[25] = (self.0[3] >> 44) as u8;
-            s[26] = (self.0[4] >> 0) as u8;
+            s[26] = self.0[4] as u8;
             s[27] = (self.0[4] >> 8) as u8;
             s[28] = (self.0[4] >> 16) as u8;
             s[29] = (self.0[4] >> 24) as u8;
@@ -412,8 +412,8 @@ mod tests {
         fn arbitrary<G: Gen>(g: &mut G) -> Octet32 {
             let mut octet32 = [0u8; 32];
 
-            for i in 0..32 {
-                octet32[i] = u8::arbitrary(g);
+            for octet in &mut octet32 {
+                *octet = u8::arbitrary(g);
             }
 
             Octet32(octet32)
