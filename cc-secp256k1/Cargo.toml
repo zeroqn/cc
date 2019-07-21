@@ -8,8 +8,13 @@ license = "MIT"
 [dependencies]
 cc = { path = "../cc" }
 
-secp256k1 = { version = "0.14" }
+secp256k1 = { version = "0.14", features = [ "rand" ] }
+lazy_static = "1.3"
+rand = "0.6"
 
 [dev-dependencies]
+cc = { path = "../cc", features = [ "proptest" ] }
+
+sha2 = "0.8"
 quickcheck = "0.8"
 quickcheck_macros = "0.8"
