@@ -35,18 +35,28 @@ impl AsRef<[u8]> for Hash {
 }
 
 #[cfg(test)]
-use quickcheck::{Arbitrary, Gen};
+mod tests {
+    use super::Hash;
 
-#[cfg(test)]
-// TODO: SeedableRng
-impl Arbitrary for Hash {
-    fn arbitrary<G: Gen>(g: &mut G) -> Hash {
-        let mut hash = [0u8; 32];
+    use quickcheck::{Arbitrary, Gen};
+    use quickcheck_macros::quickcheck;
 
-        for byte in &mut hash {
-            *byte = u8::arbitrary(g);
+    use std::convert::TryFrom;
+
+    impl Arbitrary for Hash {
+        fn arbitrary<G: Gen>(g: &mut G) -> Hash {
+            let mut hash = [0u8; 32];
+
+            for byte in &mut hash {
+                *byte = u8::arbitrary(g);
+            }
+
+            Hash(hash)
         }
+    }
 
-        Hash(hash)
+    #[quickcheck]
+    fn prop_hash_bytes(hash: Hash) {
+        assert!(Hash::try_from(hash.as_ref()).is_ok());
     }
 }

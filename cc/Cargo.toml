@@ -8,4 +8,5 @@ license = "MIT"
 [dependencies]
 
 [dev-dependencies]
-quickcheck = "0.8.5"
+quickcheck = "0.8"
+quickcheck_macros = "0.8"
