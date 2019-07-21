@@ -1,6 +1,6 @@
 // TODO: documents
 
-use cc::{CryptoError, Hash, PrivateKey, PublicKey, Signature};
+use cc::{CryptoError, HashValue, PrivateKey, PublicKey, Signature};
 use curve25519_dalek::scalar::Scalar;
 
 use std::convert::TryFrom;
@@ -73,7 +73,7 @@ impl PrivateKey<32> for Ed25519PrivateKey {
     type PublicKey = Ed25519PublicKey;
     type Signature = Ed25519Signature;
 
-    fn sign_message(&self, msg: &Hash) -> Self::Signature {
+    fn sign_message(&self, msg: &HashValue) -> Self::Signature {
         let secret_key = self.raw();
         let pub_key = self.pub_key();
 
@@ -147,7 +147,7 @@ impl TryFrom<&[u8]> for Ed25519PublicKey {
 impl PublicKey<32> for Ed25519PublicKey {
     type Signature = Ed25519Signature;
 
-    fn verify_signature(&self, msg: &Hash, sig: &Self::Signature) -> Result<(), CryptoError> {
+    fn verify_signature(&self, msg: &HashValue, sig: &Self::Signature) -> Result<(), CryptoError> {
         sig.verify(msg, self)
     }
 
@@ -211,7 +211,7 @@ impl TryFrom<&[u8]> for Ed25519Signature {
 impl Signature<64> for Ed25519Signature {
     type PublicKey = Ed25519PublicKey;
 
-    fn verify(&self, msg: &Hash, pub_key: &Self::PublicKey) -> Result<(), CryptoError> {
+    fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), CryptoError> {
         self.is_valid()?;
 
         let pub_key = pub_key.raw();
@@ -233,7 +233,7 @@ impl Signature<64> for Ed25519Signature {
 mod tests {
     use super::{Ed25519Keypair, Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature};
 
-    use cc::{CryptoError, Hash, PrivateKey, PublicKey, Signature};
+    use cc::{CryptoError, HashValue, PrivateKey, PublicKey, Signature};
     use cc_quickcheck_types::Octet32;
 
     use curve25519_dalek::scalar::Scalar;
@@ -421,7 +421,7 @@ mod tests {
             let msg = b"the last night";
 
             bytes[..msg.len()].copy_from_slice(msg);
-            Hash::try_from(&bytes as &[u8]).expect("Hashed msg")
+            HashValue::try_from(&bytes as &[u8]).expect("HashValue")
         };
 
         let sig = priv_key.sign_message(&msg);
@@ -444,7 +444,7 @@ mod tests {
     }
 
     #[quickcheck]
-    fn prop_malleable_signature_should_not_pass(msg: Hash, priv_key: Octet32) {
+    fn prop_malleable_signature_should_not_pass(msg: HashValue, priv_key: Octet32) {
         let private_key = Ed25519PrivateKey::try_from(priv_key.as_ref()).unwrap();
 
         let pub_key = private_key.pub_key();
@@ -506,7 +506,7 @@ mod tests {
     }
 
     #[quickcheck]
-    fn prop_signature_bytes_serialization(msg: Hash, priv_key: Octet32) -> bool {
+    fn prop_signature_bytes_serialization(msg: HashValue, priv_key: Octet32) -> bool {
         let private_key = Ed25519PrivateKey::try_from(priv_key.as_ref()).unwrap();
 
         let sig = private_key.sign_message(&msg);
@@ -514,7 +514,7 @@ mod tests {
     }
 
     #[quickcheck]
-    fn prop_message_sign_and_verify(msg: Hash, priv_key: Octet32) -> bool {
+    fn prop_message_sign_and_verify(msg: HashValue, priv_key: Octet32) -> bool {
         let private_key = Ed25519PrivateKey::try_from(priv_key.as_ref()).unwrap();
 
         let pub_key = private_key.pub_key();

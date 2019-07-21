@@ -1,4 +1,4 @@
-use cc::{CryptoError, Hash, PrivateKey, PublicKey, Signature};
+use cc::{CryptoError, HashValue, PrivateKey, PublicKey, Signature};
 
 use lazy_static::lazy_static;
 use rand::{CryptoRng, Rng};
@@ -19,7 +19,7 @@ pub struct Secp256k1Signature(secp256k1::Signature);
 #[derive(Debug, PartialEq)]
 pub struct Secp256k1Error(secp256k1::Error);
 
-pub struct HashedMessage<'a>(&'a Hash);
+pub struct HashedMessage<'a>(&'a HashValue);
 
 pub fn generate_keypair<R: CryptoRng + Rng + ?Sized>(
     rng: &mut R,
@@ -50,7 +50,7 @@ impl PrivateKey<32> for Secp256k1PrivateKey {
     type PublicKey = Secp256k1PublicKey;
     type Signature = Secp256k1Signature;
 
-    fn sign_message(&self, msg: &Hash) -> Self::Signature {
+    fn sign_message(&self, msg: &HashValue) -> Self::Signature {
         let msg = Message::from(HashedMessage(msg));
         let sig = ENGINE.sign(&msg, &self.0);
 
@@ -88,7 +88,7 @@ impl TryFrom<&[u8]> for Secp256k1PublicKey {
 impl PublicKey<33> for Secp256k1PublicKey {
     type Signature = Secp256k1Signature;
 
-    fn verify_signature(&self, msg: &Hash, sig: &Self::Signature) -> Result<(), CryptoError> {
+    fn verify_signature(&self, msg: &HashValue, sig: &Self::Signature) -> Result<(), CryptoError> {
         let msg = Message::from(HashedMessage(msg));
 
         ENGINE
@@ -120,7 +120,7 @@ impl TryFrom<&[u8]> for Secp256k1Signature {
 impl Signature<64> for Secp256k1Signature {
     type PublicKey = Secp256k1PublicKey;
 
-    fn verify(&self, msg: &Hash, pub_key: &Self::PublicKey) -> Result<(), CryptoError> {
+    fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), CryptoError> {
         let msg = Message::from(HashedMessage(msg));
 
         ENGINE
@@ -176,7 +176,7 @@ impl<'a> ThirtyTwoByteHash for HashedMessage<'a> {
 mod tests {
     use super::generate_keypair;
 
-    use cc::{Hash, PrivateKey, Signature};
+    use cc::{HashValue, PrivateKey, Signature};
 
     use rand::rngs::OsRng;
     use sha2::{Digest, Sha256};
@@ -191,7 +191,7 @@ mod tests {
         let msg = {
             let mut hasher = Sha256::new();
             hasher.input(b"you can(not) redo");
-            Hash::try_from(&hasher.result()[..32]).expect("msg")
+            HashValue::try_from(&hasher.result()[..32]).expect("msg")
         };
 
         let sig = priv_key.sign_message(&msg);

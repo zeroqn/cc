@@ -1,7 +1,7 @@
 #![feature(const_generics)]
 
 pub mod hash;
-pub use hash::Hash;
+pub use hash::HashValue;
 
 use std::convert::TryFrom;
 
@@ -18,7 +18,7 @@ pub trait PrivateKey<const LENGTH: usize>: for<'a> TryFrom<&'a [u8], Error = Cry
     type PublicKey;
     type Signature;
 
-    fn sign_message(&self, msg: &Hash) -> Self::Signature;
+    fn sign_message(&self, msg: &HashValue) -> Self::Signature;
 
     fn pub_key(&self) -> Self::PublicKey;
 
@@ -28,7 +28,7 @@ pub trait PrivateKey<const LENGTH: usize>: for<'a> TryFrom<&'a [u8], Error = Cry
 pub trait PublicKey<const LENGTH: usize>: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
     type Signature;
 
-    fn verify_signature(&self, msg: &Hash, sig: &Self::Signature) -> Result<(), CryptoError>;
+    fn verify_signature(&self, msg: &HashValue, sig: &Self::Signature) -> Result<(), CryptoError>;
 
     fn to_bytes(&self) -> [u8; LENGTH];
 }
@@ -36,7 +36,7 @@ pub trait PublicKey<const LENGTH: usize>: for<'a> TryFrom<&'a [u8], Error = Cryp
 pub trait Signature<const LENGTH: usize>: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
     type PublicKey;
 
-    fn verify(&self, msg: &Hash, pub_key: &Self::PublicKey) -> Result<(), CryptoError>;
+    fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), CryptoError>;
 
     fn to_bytes(&self) -> [u8; LENGTH];
 }
