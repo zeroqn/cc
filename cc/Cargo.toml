@@ -7,6 +7,11 @@ license = "MIT"
 
 [dependencies]
 
+[dependencies.rand]
+version = "0.6"
+optional = true
+default-features = false
+
 [dependencies.quickcheck]
 version = "0.8"
 optional = true
@@ -23,4 +28,5 @@ quickcheck_macros = "0.8"
 
 [features]
 default = []
+generate = [ "rand" ]
 proptest = [ "quickcheck", "cc-quickcheck-types" ]
