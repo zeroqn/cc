@@ -5,4 +5,5 @@ members = [
   "cc-secp256k1",
   "cc-ed25519",
   "cc-quickcheck-types",
+  "cc-derive",
 ]

@@ -1,12 +1,15 @@
 // TODO: documents
 
 use cc::{CryptoError, HashValue, PrivateKey, PublicKey, Signature};
+use cc_derive::SecretDebug;
+
 use curve25519_dalek::scalar::Scalar;
 
 use std::convert::TryFrom;
 
 pub struct Ed25519Keypair(ed25519_dalek::Keypair);
 
+#[derive(SecretDebug)]
 pub struct Ed25519PrivateKey(ed25519_dalek::SecretKey);
 
 #[derive(Debug, PartialEq)]
@@ -52,12 +55,6 @@ impl Into<Ed25519PrivateKey> for Ed25519Keypair {
 // PrivateKey Impl
 //
 
-impl Ed25519PrivateKey {
-    pub fn raw(&self) -> &ed25519_dalek::SecretKey {
-        &self.0
-    }
-}
-
 impl TryFrom<&[u8]> for Ed25519PrivateKey {
     type Error = CryptoError;
 
@@ -74,18 +71,16 @@ impl PrivateKey<32> for Ed25519PrivateKey {
     type Signature = Ed25519Signature;
 
     fn sign_message(&self, msg: &HashValue) -> Self::Signature {
-        let secret_key = self.raw();
+        let expanded_secret_key = ed25519_dalek::ExpandedSecretKey::from(&self.0);
         let pub_key = self.pub_key();
 
-        let expanded_secret_key = ed25519_dalek::ExpandedSecretKey::from(secret_key);
         let sig = expanded_secret_key.sign(msg.as_ref(), pub_key.raw());
 
         Ed25519Signature(sig)
     }
 
     fn pub_key(&self) -> Self::PublicKey {
-        let secret_key = self.raw();
-        let pub_key = ed25519_dalek::PublicKey::from(secret_key);
+        let pub_key = ed25519_dalek::PublicKey::from(&self.0);
 
         Ed25519PublicKey(pub_key)
     }
@@ -161,12 +156,8 @@ impl PublicKey<32> for Ed25519PublicKey {
 //
 
 impl Ed25519Signature {
-    pub fn raw(&self) -> &ed25519_dalek::Signature {
-        &self.0
-    }
-
     pub fn is_valid(&self) -> Result<(), CryptoError> {
-        let bytes = self.raw().to_bytes();
+        let bytes = &self.0.to_bytes();
 
         let mut s_bits: [u8; 32] = [0; 32];
         s_bits.copy_from_slice(&bytes[32..]);
@@ -214,11 +205,9 @@ impl Signature<64> for Ed25519Signature {
     fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), CryptoError> {
         self.is_valid()?;
 
-        let pub_key = pub_key.raw();
-        let sig = self.raw();
-
+        let pub_key = pub_key.0;
         pub_key
-            .verify(msg.as_ref(), sig)
+            .verify(msg.as_ref(), &self.0)
             .map_err(|_| CryptoError::InvalidSignature)?;
 
         Ok(())
@@ -399,6 +388,20 @@ mod tests {
         ],
     ];
 
+    impl Clone for Ed25519PrivateKey {
+        fn clone(&self) -> Self {
+            Self::try_from(self.0.as_ref()).unwrap()
+        }
+    }
+
+    impl Arbitrary for Ed25519PrivateKey {
+        fn arbitrary<G: Gen>(g: &mut G) -> Ed25519PrivateKey {
+            let octet32 = Octet32::arbitrary(g);
+
+            Ed25519PrivateKey::try_from(octet32.as_ref()).unwrap()
+        }
+    }
+
     impl Ed25519Signature {
         fn from_bytes_unchecked(bytes: &[u8]) -> Result<Ed25519Signature, CryptoError> {
             let sig = ed25519_dalek::Signature::from_bytes(bytes)
@@ -444,11 +447,9 @@ mod tests {
     }
 
     #[quickcheck]
-    fn prop_malleable_signature_should_not_pass(msg: HashValue, priv_key: Octet32) {
-        let private_key = Ed25519PrivateKey::try_from(priv_key.as_ref()).unwrap();
-
-        let pub_key = private_key.pub_key();
-        let sig = private_key.sign_message(&msg);
+    fn prop_malleable_signature_should_not_pass(msg: HashValue, priv_key: Ed25519PrivateKey) {
+        let pub_key = priv_key.pub_key();
+        let sig = priv_key.sign_message(&msg);
 
         assert!(sig.verify(&msg, &pub_key).is_ok());
 
@@ -465,14 +466,14 @@ mod tests {
         };
 
         let modified_sig_bytes: [u8; 64] = {
-            let mut sig_bytes = sig.raw().to_bytes();
+            let mut sig_bytes = sig.0.to_bytes();
             sig_bytes[32..].copy_from_slice(&scalar52.to_bytes());
             sig_bytes
         };
 
         // Modified signature is able to pass dalek check
         let dalek_sig = ed25519_dalek::Signature::from_bytes(&modified_sig_bytes);
-        let dalek_pub_key = pub_key.raw();
+        let dalek_pub_key = &pub_key.0;
 
         assert!(dalek_sig.is_ok());
         assert!(dalek_pub_key
@@ -491,36 +492,30 @@ mod tests {
     }
 
     #[quickcheck]
-    fn prop_private_key_bytes_serialization(priv_key: Octet32) -> bool {
-        let private_key = Ed25519PrivateKey::try_from(priv_key.as_ref()).unwrap();
-
-        ed25519_dalek::SecretKey::from_bytes(&private_key.to_bytes()).is_ok()
+    fn prop_private_key_bytes_serialization(priv_key: Ed25519PrivateKey) -> bool {
+        ed25519_dalek::SecretKey::from_bytes(&priv_key.to_bytes()).is_ok()
     }
 
     #[quickcheck]
-    fn prop_public_key_bytes_serialization(priv_key: Octet32) -> bool {
-        let private_key = Ed25519PrivateKey::try_from(priv_key.as_ref()).unwrap();
-        let pub_key = private_key.pub_key();
+    fn prop_public_key_bytes_serialization(priv_key: Ed25519PrivateKey) -> bool {
+        let pub_key = priv_key.pub_key();
 
         ed25519_dalek::PublicKey::from_bytes(&pub_key.to_bytes()).is_ok()
     }
 
     #[quickcheck]
-    fn prop_signature_bytes_serialization(msg: HashValue, priv_key: Octet32) -> bool {
-        let private_key = Ed25519PrivateKey::try_from(priv_key.as_ref()).unwrap();
+    fn prop_signature_bytes_serialization(msg: HashValue, priv_key: Ed25519PrivateKey) -> bool {
+        let sig = priv_key.sign_message(&msg);
 
-        let sig = private_key.sign_message(&msg);
         ed25519_dalek::Signature::from_bytes(&sig.to_bytes()).is_ok()
     }
 
     #[quickcheck]
-    fn prop_message_sign_and_verify(msg: HashValue, priv_key: Octet32) -> bool {
-        let private_key = Ed25519PrivateKey::try_from(priv_key.as_ref()).unwrap();
-
-        let pub_key = private_key.pub_key();
-        let sig = private_key.sign_message(&msg);
+    fn prop_message_sign_and_verify(msg: HashValue, priv_key: Ed25519PrivateKey) -> bool {
+        let pub_key = priv_key.pub_key();
+        let sig = priv_key.sign_message(&msg);
 
         assert!(sig.verify(&msg, &pub_key).is_ok());
-        pub_key.raw().verify(msg.as_ref(), sig.raw()).is_ok()
+        pub_key.0.verify(msg.as_ref(), &sig.0).is_ok()
     }
 }

@@ -7,6 +7,7 @@ license = "MIT"
 
 [dependencies]
 cc = { path = "../cc" }
+cc-derive = { path = "../cc-derive" }
 
 ed25519-dalek = { version = "1.0.0-pre.1", features = [ "asm" ] }
 curve25519-dalek = "1.2"
