@@ -7,4 +7,5 @@ members = [
   "cc-quickcheck-types",
   "cc-derive",
   "cc-sm2",
+  "cc-bls12381",
 ]

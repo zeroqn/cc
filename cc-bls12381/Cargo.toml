@@ -1,0 +1,31 @@
+[package]
+name = "cc-bls12381"
+version = "0.1.0"
+authors = ["zero.qn <zero.qn@outlook.com>"]
+edition = "2018"
+license = "MIT"
+
+[dependencies]
+cc = { path = "../cc" }
+cc-derive = { path = "../cc-derive" }
+
+threshold_crypto = "0.3"
+serde = "1.0"
+bincode = "1.1"
+quickcheck = "0.8"
+quickcheck_macros = "0.8"
+
+[dependencies.rand]
+version = "0.6"
+optional = true
+default-features = false
+
+[dev-dependencies]
+cc = { path = "../cc", features = [ "proptest" ] }
+
+rand = "0.6"
+sha2 = "0.8"
+
+[features]
+default = []
+generate = [ "cc/generate", "rand" ]
