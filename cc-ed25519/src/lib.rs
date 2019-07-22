@@ -3,9 +3,7 @@
 use cc::{Crypto, CryptoError, HashValue, PrivateKey, PublicKey, Signature};
 use cc_derive::SecretDebug;
 
-#[cfg(feature = "generate")]
-use cc::{CryptoRng, Rng};
-#[cfg(test)]
+#[cfg(any(test, feature = "generate"))]
 use rand::{CryptoRng, Rng};
 
 use curve25519_dalek::scalar::Scalar;
@@ -24,6 +22,8 @@ pub struct Ed25519Signature(ed25519_dalek::Signature);
 pub struct Ed25519;
 
 impl Crypto<32, 32> for Ed25519 {
+    #[cfg(feature = "generate")]
+    type KeyGenerator = Ed25519PrivateKey;
     type PrivateKey = Ed25519PrivateKey;
     type PublicKey = Ed25519PublicKey;
     type Signature = Ed25519Signature;
@@ -39,6 +39,17 @@ pub fn generate_keypair<R: CryptoRng + Rng + ?Sized>(
     let priv_key = Ed25519PrivateKey(keypair.secret);
 
     (priv_key, pub_key)
+}
+
+#[cfg(feature = "generate")]
+impl cc::KeyGenerator for Ed25519PrivateKey {
+    type Output = Ed25519PrivateKey;
+
+    fn generate<R: CryptoRng + Rng + ?Sized>(rng: &mut R) -> Self::Output {
+        let (priv_key, _) = generate_keypair(rng);
+
+        priv_key
+    }
 }
 
 //
@@ -59,13 +70,6 @@ impl TryFrom<&[u8]> for Ed25519PrivateKey {
 impl PrivateKey<32> for Ed25519PrivateKey {
     type PublicKey = Ed25519PublicKey;
     type Signature = Ed25519Signature;
-
-    #[cfg(feature = "generate")]
-    fn generate<R: CryptoRng + Rng + ?Sized>(rng: &mut R) -> Self {
-        let (priv_key, _) = generate_keypair(rng);
-
-        priv_key
-    }
 
     fn sign_message(&self, msg: &HashValue) -> Self::Signature {
         let expanded_secret_key = ed25519_dalek::ExpandedSecretKey::from(&self.0);

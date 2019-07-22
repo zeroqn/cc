@@ -1,6 +1,9 @@
 use cc::{Crypto, CryptoError, HashValue, PrivateKey, PublicKey, Signature};
 use cc_derive::SecretDebug;
 
+#[cfg(any(test, feature = "generate"))]
+use rand::{CryptoRng, Rng};
+
 use lazy_static::lazy_static;
 use libsm::sm2::signature::{self as sm2, SigCtx};
 
@@ -20,6 +23,8 @@ pub struct SM2Signature(sm2::Signature);
 pub struct Sm2;
 
 impl Crypto<32, 33> for Sm2 {
+    #[cfg(feature = "generate")]
+    type KeyGenerator = SM2PrivateKey;
     type PrivateKey = SM2PrivateKey;
     type PublicKey = SM2PublicKey;
     type Signature = SM2Signature;
@@ -30,6 +35,17 @@ pub fn generate_keypair() -> (SM2PrivateKey, SM2PublicKey) {
     let (public_key, secret_key) = SM2_CONTEXT.new_keypair();
 
     (SM2PrivateKey(secret_key), SM2PublicKey(public_key))
+}
+
+#[cfg(feature = "generate")]
+impl cc::KeyGenerator for SM2PrivateKey {
+    type Output = SM2PrivateKey;
+
+    fn generate<R: CryptoRng + Rng + ?Sized>(_rng: &mut R) -> Self::Output {
+        let (priv_key, _) = generate_keypair();
+
+        priv_key
+    }
 }
 
 //
@@ -51,13 +67,6 @@ impl TryFrom<&[u8]> for SM2PrivateKey {
 impl PrivateKey<32> for SM2PrivateKey {
     type PublicKey = SM2PublicKey;
     type Signature = SM2Signature;
-
-    #[cfg(feature = "generate")]
-    fn generate<R: CryptoRng + Rng + ?Sized>(_rng: &mut R) -> Self {
-        let (priv_key, _) = generate_keypair();
-
-        priv_key
-    }
 
     fn sign_message(&self, msg: &HashValue) -> Self::Signature {
         let sig = SM2_CONTEXT.sign_raw(msg.as_ref(), &self.0);

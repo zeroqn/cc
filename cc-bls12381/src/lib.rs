@@ -1,9 +1,7 @@
 use cc::{Crypto, CryptoError, HashValue, PrivateKey, PublicKey, Signature};
 use cc_derive::SecretDebug;
 
-#[cfg(feature = "generate")]
-use cc::{CryptoRng, Rng};
-#[cfg(test)]
+#[cfg(any(test, feature = "generate"))]
 use rand::{CryptoRng, Rng};
 
 #[cfg(any(test, feature = "generate"))]
@@ -25,6 +23,8 @@ pub struct BLS12381Signature(threshold_crypto::Signature);
 pub struct BLS12381;
 
 impl Crypto<32, 48> for BLS12381 {
+    #[cfg(feature = "generate")]
+    type KeyGenerator = BLS12381PrivateKey;
     type PrivateKey = BLS12381PrivateKey;
     type PublicKey = BLS12381PublicKey;
     type Signature = BLS12381Signature;
@@ -38,6 +38,17 @@ pub fn generate_keypair<R: CryptoRng + Rng + ?Sized>(
     let pub_key = secret_key.public_key();
 
     (BLS12381PrivateKey(secret_key), BLS12381PublicKey(pub_key))
+}
+
+#[cfg(feature = "generate")]
+impl cc::KeyGenerator for BLS12381PrivateKey {
+    type Output = BLS12381PrivateKey;
+
+    fn generate<R: CryptoRng + Rng + ?Sized>(mut rng: &mut R) -> Self::Output {
+        let (priv_key, _) = generate_keypair(&mut rng);
+
+        priv_key
+    }
 }
 
 //
@@ -58,13 +69,6 @@ impl TryFrom<&[u8]> for BLS12381PrivateKey {
 impl PrivateKey<32> for BLS12381PrivateKey {
     type PublicKey = BLS12381PublicKey;
     type Signature = BLS12381Signature;
-
-    #[cfg(feature = "generate")]
-    fn generate<R: CryptoRng + Rng + ?Sized>(rng: &mut R) -> Self {
-        let (priv_key, _) = generate_keypair(&mut rng);
-
-        priv_key
-    }
 
     fn sign_message(&self, msg: &HashValue) -> Self::Signature {
         let sig = self.0.sign(msg.as_ref());

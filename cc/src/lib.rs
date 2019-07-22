@@ -4,7 +4,7 @@ pub mod hash;
 pub use hash::HashValue;
 
 #[cfg(feature = "generate")]
-pub use rand::{CryptoRng, Rng};
+use rand::{CryptoRng, Rng};
 
 use std::convert::TryFrom;
 
@@ -17,12 +17,16 @@ pub enum CryptoError {
     Other(&'static str),
 }
 
+#[cfg(feature = "generate")]
+pub trait KeyGenerator {
+    type Output;
+
+    fn generate<R: CryptoRng + Rng + ?Sized>(rng: &mut R) -> Self::Output;
+}
+
 pub trait PrivateKey<const LEN: usize>: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
     type PublicKey;
     type Signature;
-
-    #[cfg(feature = "generate")]
-    fn generate<R: CryptoRng + Rng + ?Sized>(rng: &mut R) -> Self;
 
     fn sign_message(&self, msg: &HashValue) -> Self::Signature;
 
@@ -47,6 +51,8 @@ pub trait Signature: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
 }
 
 pub trait Crypto<const SK: usize, const PK: usize> {
+    #[cfg(feature = "generate")]
+    type KeyGenerator: KeyGenerator<Output = Self::PrivateKey>;
     type PrivateKey: PrivateKey<{ SK }, PublicKey = Self::PublicKey, Signature = Self::Signature>;
     type PublicKey: PublicKey<{ PK }, Signature = Self::Signature>;
     type Signature: Signature<PublicKey = Self::PublicKey>;
@@ -55,7 +61,7 @@ pub trait Crypto<const SK: usize, const PK: usize> {
     fn generate_keypair<R: CryptoRng + Rng + ?Sized>(
         mut rng: &mut R,
     ) -> (Self::PrivateKey, Self::PublicKey) {
-        let priv_key = Self::PrivateKey::generate(&mut rng);
+        let priv_key = Self::KeyGenerator::generate(&mut rng);
         let pub_key = priv_key.pub_key();
 
         (priv_key, pub_key)

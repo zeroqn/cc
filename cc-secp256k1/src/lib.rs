@@ -1,9 +1,7 @@
 use cc::{Crypto, CryptoError, HashValue, PrivateKey, PublicKey, Signature};
 use cc_derive::SecretDebug;
 
-#[cfg(feature = "generate")]
-use cc::{CryptoRng, Rng};
-#[cfg(test)]
+#[cfg(any(test, feature = "generate"))]
 use rand::{CryptoRng, Rng};
 
 use lazy_static::lazy_static;
@@ -32,6 +30,8 @@ pub struct HashedMessage<'a>(&'a HashValue);
 pub struct Secp256k1;
 
 impl Crypto<32, 33> for Secp256k1 {
+    #[cfg(feature = "generate")]
+    type KeyGenerator = Secp256k1PrivateKey;
     type PrivateKey = Secp256k1PrivateKey;
     type PublicKey = Secp256k1PublicKey;
     type Signature = Secp256k1Signature;
@@ -47,6 +47,17 @@ pub fn generate_keypair<R: CryptoRng + Rng + ?Sized>(
         Secp256k1PrivateKey(secret_key),
         Secp256k1PublicKey(public_key),
     )
+}
+
+#[cfg(feature = "generate")]
+impl cc::KeyGenerator for Secp256k1PrivateKey {
+    type Output = Secp256k1PrivateKey;
+
+    fn generate<R: CryptoRng + Rng + ?Sized>(rng: &mut R) -> Self::Output {
+        let (priv_key, _) = generate_keypair(rng);
+
+        priv_key
+    }
 }
 
 //
@@ -66,13 +77,6 @@ impl TryFrom<&[u8]> for Secp256k1PrivateKey {
 impl PrivateKey<32> for Secp256k1PrivateKey {
     type PublicKey = Secp256k1PublicKey;
     type Signature = Secp256k1Signature;
-
-    #[cfg(feature = "generate")]
-    fn generate<R: CryptoRng + Rng + ?Sized>(rng: &mut R) -> Self {
-        let (priv_key, _) = generate_keypair(rng);
-
-        priv_key
-    }
 
     fn sign_message(&self, msg: &HashValue) -> Self::Signature {
         let msg = Message::from(HashedMessage(msg));
