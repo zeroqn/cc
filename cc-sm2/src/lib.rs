@@ -1,7 +1,7 @@
 use cc::{Crypto, CryptoError, HashValue, PrivateKey, PublicKey, Signature};
 use cc_derive::SecretDebug;
 
-#[cfg(any(test, feature = "generate"))]
+#[cfg(feature = "generate")]
 use rand::{CryptoRng, Rng};
 
 use lazy_static::lazy_static;

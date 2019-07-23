@@ -1,6 +1,7 @@
 #![feature(const_generics)]
 
 pub mod hash;
+pub mod threshold;
 pub use hash::HashValue;
 
 #[cfg(feature = "generate")]
@@ -24,6 +25,8 @@ pub trait KeyGenerator {
     fn generate<R: CryptoRng + Rng + ?Sized>(rng: &mut R) -> Self::Output;
 }
 
+// TODO: reconsider to_bytes()? maybe return small vec? some cases do
+// allocation.
 pub trait PrivateKey<const LEN: usize>: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
     type PublicKey;
     type Signature;
@@ -41,6 +44,7 @@ pub trait PublicKey<const LEN: usize>: for<'a> TryFrom<&'a [u8], Error = CryptoE
     fn to_bytes(&self) -> [u8; LEN];
 }
 
+// TODO: move verify to PublicKey trait
 pub trait Signature: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
     type PublicKey;
 

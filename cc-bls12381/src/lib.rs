@@ -1,3 +1,6 @@
+pub mod threshold;
+pub use threshold::BLS12381Threshold;
+
 use cc::{Crypto, CryptoError, HashValue, PrivateKey, PublicKey, Signature};
 use cc_derive::SecretDebug;
 
@@ -55,6 +58,7 @@ impl cc::KeyGenerator for BLS12381PrivateKey {
 // PrivateKey Impl
 //
 
+// TODO: SerdeSecret?
 impl TryFrom<&[u8]> for BLS12381PrivateKey {
     type Error = CryptoError;
 
@@ -82,6 +86,10 @@ impl PrivateKey<32> for BLS12381PrivateKey {
         BLS12381PublicKey(pub_key)
     }
 
+    // TODO: reconsider panic
+    /// # panic
+    ///
+    /// Panic when failed to serialize secret key
     fn to_bytes(&self) -> [u8; 32] {
         let ser_secret = {
             let secret = SerdeSecret(&self.0);
