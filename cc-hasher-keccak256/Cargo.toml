@@ -1,0 +1,15 @@
+[package]
+name = "cc-hasher-keccak256"
+version = "0.1.0"
+authors = ["zero.qn <zero.qn@outlook.com>"]
+edition = "2018"
+license = "MIT"
+
+[dependencies]
+cc-hasher = { path = "../cc-hasher" }
+
+tiny-keccak = "1.5"
+
+[dev-dependencies]
+quickcheck = "0.8"
+quickcheck_macros = "0.8"
