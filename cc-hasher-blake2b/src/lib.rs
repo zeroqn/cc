@@ -40,7 +40,7 @@ mod tests {
     use quickcheck_macros::quickcheck;
 
     #[quickcheck]
-    fn prop_keccak256_bytes(key: String, msg: String) -> TestResult {
+    fn prop_blake2b_bytes(key: String, msg: String) -> TestResult {
         if key.len() > blake2b_simd::KEYBYTES {
             return TestResult::discard();
         }
