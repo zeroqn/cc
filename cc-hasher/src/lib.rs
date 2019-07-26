@@ -9,7 +9,7 @@ pub struct HashValue([u8; HASH_VALUE_LENGTH]);
 pub struct InvalidLengthError;
 
 pub trait Hasher {
-    fn digest(data: &[u8]) -> HashValue;
+    fn digest(&self, data: &[u8]) -> HashValue;
 }
 
 impl HashValue {
