@@ -54,6 +54,6 @@ mod tests {
             .digest(msg.as_bytes())
             .to_bytes();
 
-        TestResult::from_bool(&bytes == expect_hash.as_bytes())
+        TestResult::from_bool(bytes == expect_hash.as_bytes())
     }
 }
