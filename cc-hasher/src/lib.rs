@@ -1,19 +1,25 @@
 use std::convert::TryFrom;
 
-pub const LENGTH: usize = 32;
+pub const HASH_VALUE_LENGTH: usize = 32;
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct HashValue([u8; LENGTH]);
+pub struct HashValue([u8; HASH_VALUE_LENGTH]);
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct InvalidLengthError;
 
 pub trait Hasher {
-    fn digest(&self, data: &[u8]) -> HashValue;
+    fn digest(data: &[u8]) -> HashValue;
 }
 
 impl HashValue {
-    pub fn to_bytes(&self) -> [u8; LENGTH] {
+    pub const LENGTH: usize = HASH_VALUE_LENGTH;
+
+    pub fn from_bytes_unchecked(bytes: [u8; HASH_VALUE_LENGTH]) -> Self {
+        HashValue(bytes)
+    }
+
+    pub fn to_bytes(&self) -> [u8; HASH_VALUE_LENGTH] {
         self.0
     }
 }
@@ -22,12 +28,12 @@ impl TryFrom<&[u8]> for HashValue {
     type Error = InvalidLengthError;
 
     fn try_from(bytes: &[u8]) -> Result<HashValue, Self::Error> {
-        if bytes.len() != LENGTH {
+        if bytes.len() != HASH_VALUE_LENGTH {
             return Err(InvalidLengthError);
         }
 
-        let mut hash_bytes = [0u8; LENGTH];
-        hash_bytes.copy_from_slice(&bytes[..LENGTH]);
+        let mut hash_bytes = [0u8; HASH_VALUE_LENGTH];
+        hash_bytes.copy_from_slice(&bytes[..HASH_VALUE_LENGTH]);
 
         Ok(HashValue(hash_bytes))
     }

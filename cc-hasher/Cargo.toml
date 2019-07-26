@@ -3,6 +3,7 @@ name = "cc-hasher"
 version = "0.1.0"
 authors = ["zero.qn <zero.qn@outlook.com>"]
 edition = "2018"
+license = "MIT"
 
 [dependencies]
 quickcheck = { version = "0.8", default-features = false, optional = true }
