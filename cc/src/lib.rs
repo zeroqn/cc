@@ -2,7 +2,7 @@
 
 pub mod threshold;
 
-pub use cc_hasher::HashValue;
+pub use cc_hasher::{HashValue, Hasher};
 
 #[cfg(feature = "generate")]
 use rand::{CryptoRng, Rng};

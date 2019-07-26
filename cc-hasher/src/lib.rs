@@ -8,6 +8,10 @@ pub struct HashValue([u8; LENGTH]);
 #[derive(Clone, PartialEq, Debug)]
 pub struct InvalidLengthError;
 
+pub trait Hasher {
+    fn digest(&self, data: &[u8]) -> HashValue;
+}
+
 impl HashValue {
     pub fn to_bytes(&self) -> [u8; LENGTH] {
         self.0
