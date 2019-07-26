@@ -11,4 +11,5 @@ members = [
   "cc-hasher",
   "cc-hasher-keccak256",
   "cc-hasher-blake2b",
+  "cc-hasher-sm3",
 ]
