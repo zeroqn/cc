@@ -1,8 +1,8 @@
 #![feature(const_generics)]
 
-pub mod hash;
 pub mod threshold;
-pub use hash::HashValue;
+
+pub use cc_hasher::HashValue;
 
 #[cfg(feature = "generate")]
 use rand::{CryptoRng, Rng};
@@ -91,6 +91,12 @@ pub trait Crypto<const SK: usize, const PK: usize> {
 
         sig.verify(&msg, &pub_key)?;
         Ok(())
+    }
+}
+
+impl From<cc_hasher::InvalidLengthError> for CryptoError {
+    fn from(_: cc_hasher::InvalidLengthError) -> CryptoError {
+        CryptoError::InvalidLength
     }
 }
 

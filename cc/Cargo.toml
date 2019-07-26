@@ -6,6 +6,7 @@ edition = "2018"
 license = "MIT"
 
 [dependencies]
+cc-hasher = { path = "../cc-hasher" }
 
 [dependencies.rand]
 version = "0.6"
@@ -29,4 +30,4 @@ quickcheck_macros = "0.8"
 [features]
 default = []
 generate = [ "rand" ]
-proptest = [ "quickcheck", "cc-quickcheck-types" ]
+proptest = [ "quickcheck", "cc-quickcheck-types", "cc-hasher/proptest" ]

@@ -8,4 +8,5 @@ members = [
   "cc-derive",
   "cc-sm2",
   "cc-bls12381",
+  "cc-hasher",
 ]

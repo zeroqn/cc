@@ -1,11 +1,12 @@
-use crate::CryptoError;
-
 use std::convert::TryFrom;
 
 pub const LENGTH: usize = 32;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct HashValue([u8; LENGTH]);
+
+#[derive(Clone, PartialEq, Debug)]
+pub struct InvalidLengthError;
 
 impl HashValue {
     pub fn to_bytes(&self) -> [u8; LENGTH] {
@@ -14,11 +15,11 @@ impl HashValue {
 }
 
 impl TryFrom<&[u8]> for HashValue {
-    type Error = CryptoError;
+    type Error = InvalidLengthError;
 
     fn try_from(bytes: &[u8]) -> Result<HashValue, Self::Error> {
         if bytes.len() != LENGTH {
-            return Err(CryptoError::InvalidLength);
+            return Err(InvalidLengthError);
         }
 
         let mut hash_bytes = [0u8; LENGTH];
@@ -44,6 +45,24 @@ impl quickcheck::Arbitrary for HashValue {
         }
 
         HashValue(hash)
+    }
+}
+
+impl InvalidLengthError {
+    fn as_str(&self) -> &str {
+        "hash value: invalid length"
+    }
+}
+
+impl std::fmt::Display for InvalidLengthError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        f.write_str(self.as_str())
+    }
+}
+
+impl std::error::Error for InvalidLengthError {
+    fn description(&self) -> &str {
+        self.as_str()
     }
 }
 
