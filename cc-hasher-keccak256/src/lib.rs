@@ -6,6 +6,8 @@ impl Hasher for Keccak256 {
     fn digest(&self, data: &[u8]) -> HashValue {
         let bytes = tiny_keccak::keccak256(data);
 
+        assert_eq!(bytes.len(), HashValue::LENGTH);
+
         HashValue::from_bytes_unchecked(bytes)
     }
 }
