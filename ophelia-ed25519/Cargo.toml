@@ -1,0 +1,27 @@
+[package]
+name = "ophelia-ed25519"
+version = "0.1.0"
+authors = ["zero.qn <zero.qn@outlook.com>"]
+edition = "2018"
+license = "MIT"
+
+[dependencies]
+ophelia = { path = "../ophelia" }
+ophelia-derive = { path = "../ophelia-derive" }
+
+ed25519-dalek = { version = "1.0.0-pre.1", features = [ "asm" ] }
+curve25519-dalek = "1.2"
+# ed25519 requires rand 0.6
+rand = "0.6"
+
+[dev-dependencies]
+# FIXME: compiler crash if we add "generate"
+ophelia = { path = "../ophelia", features = [ "proptest" ] }
+
+rand = "0.6"
+quickcheck = "0.8"
+quickcheck_macros = "0.8"
+
+[features]
+default = []
+generate = [ "ophelia/generate" ]

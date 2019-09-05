@@ -1,0 +1,25 @@
+[package]
+name = "ophelia-sm2"
+version = "0.1.0"
+authors = ["zero.qn <zero.qn@outlook.com>"]
+edition = "2018"
+license = "MIT"
+
+[dependencies]
+ophelia = { path = "../ophelia" }
+ophelia-derive = { path = "../ophelia-derive" }
+
+libsm = { git = "https://github.com/cryptape/libsm", rev = "ac323abd3512a9fdb8bfd6cd349a6fc46deb688f" }
+lazy_static = "1.3"
+rand = { version = "0.6", optional = true, default-features = false }
+
+[dev-dependencies]
+ophelia = { path = "../ophelia", features = [ "proptest" ] }
+
+sha2 = "0.8"
+quickcheck = "0.8"
+quickcheck_macros = "0.8"
+
+[features]
+default = []
+generate = [ "ophelia/generate", "rand" ]

@@ -1,0 +1,33 @@
+[package]
+name = "ophelia"
+version = "0.1.0"
+authors = ["zero.qn <zero.qn@outlook.com>"]
+edition = "2018"
+license = "MIT"
+
+[dependencies]
+ophelia-hasher = { path = "../ophelia-hasher" }
+
+[dependencies.rand]
+version = "0.6"
+optional = true
+default-features = false
+
+[dependencies.quickcheck]
+version = "0.8"
+optional = true
+default-features = false
+
+[dependencies.ophelia-quickcheck-types]
+path = "../ophelia-quickcheck-types"
+optional = true
+default-features = false
+
+[dev-dependencies]
+quickcheck = "0.8"
+quickcheck_macros = "0.8"
+
+[features]
+default = []
+generate = [ "rand" ]
+proptest = [ "quickcheck", "ophelia-quickcheck-types", "ophelia-hasher/proptest" ]
