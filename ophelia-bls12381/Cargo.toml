@@ -6,8 +6,8 @@ edition = "2018"
 license = "MIT"
 
 [dependencies]
-ophelia = { path = "../ophelia" }
-ophelia-derive = { path = "../ophelia-derive" }
+ophelia = { path = "../ophelia", version = "0.1" }
+ophelia-derive = { path = "../ophelia-derive", version = "0.1" }
 
 threshold_crypto = "0.3"
 serde = "1.0"
@@ -21,7 +21,7 @@ optional = true
 default-features = false
 
 [dev-dependencies]
-ophelia = { path = "../ophelia", features = [ "proptest" ] }
+ophelia = { path = "../ophelia", version = "0.1", features = [ "proptest" ] }
 
 rand = "0.6"
 sha2 = "0.8"

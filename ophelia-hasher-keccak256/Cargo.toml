@@ -6,7 +6,7 @@ edition = "2018"
 license = "MIT"
 
 [dependencies]
-ophelia-hasher = { path = "../ophelia-hasher" }
+ophelia-hasher = { path = "../ophelia-hasher", version = "0.1" }
 
 tiny-keccak = "1.5"
 

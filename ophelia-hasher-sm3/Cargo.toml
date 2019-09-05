@@ -5,7 +5,7 @@ authors = ["zero.qn <zero.qn@outlook.com>"]
 edition = "2018"
 
 [dependencies]
-ophelia-hasher = { path = "../ophelia-hasher" }
+ophelia-hasher = { path = "../ophelia-hasher", version = "0.1" }
 
 libsm = { git = "https://github.com/cryptape/libsm", rev = "ac323abd3512a9fdb8bfd6cd349a6fc46deb688f" }
 

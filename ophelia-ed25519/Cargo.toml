@@ -6,8 +6,8 @@ edition = "2018"
 license = "MIT"
 
 [dependencies]
-ophelia = { path = "../ophelia" }
-ophelia-derive = { path = "../ophelia-derive" }
+ophelia = { path = "../ophelia", version = "0.1" }
+ophelia-derive = { path = "../ophelia-derive", version = "0.1" }
 
 ed25519-dalek = { version = "1.0.0-pre.1", features = [ "asm" ] }
 curve25519-dalek = "1.2"
@@ -16,7 +16,7 @@ rand = "0.6"
 
 [dev-dependencies]
 # FIXME: compiler crash if we add "generate"
-ophelia = { path = "../ophelia", features = [ "proptest" ] }
+ophelia = { path = "../ophelia", version = "0.1", features = [ "proptest" ] }
 
 rand = "0.6"
 quickcheck = "0.8"
