@@ -1,0 +1,31 @@
+[package]
+name = "ophelia-bls12381"
+version = "0.1.0"
+authors = ["zero.qn <zero.qn@outlook.com>"]
+edition = "2018"
+license = "MIT"
+
+[dependencies]
+ophelia = { path = "../ophelia" }
+ophelia-derive = { path = "../ophelia-derive" }
+
+threshold_crypto = "0.3"
+serde = "1.0"
+bincode = "1.1"
+quickcheck = "0.8"
+quickcheck_macros = "0.8"
+
+[dependencies.rand]
+version = "0.6"
+optional = true
+default-features = false
+
+[dev-dependencies]
+ophelia = { path = "../ophelia", features = [ "proptest" ] }
+
+rand = "0.6"
+sha2 = "0.8"
+
+[features]
+default = []
+generate = [ "ophelia/generate", "rand" ]

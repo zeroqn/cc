@@ -1,15 +1,15 @@
 [workspace]
 
 members = [
-  "cc",
-  "cc-secp256k1",
-  "cc-ed25519",
-  "cc-quickcheck-types",
-  "cc-derive",
-  "cc-sm2",
-  "cc-bls12381",
-  "cc-hasher",
-  "cc-hasher-keccak256",
-  "cc-hasher-blake2b",
-  "cc-hasher-sm3",
+  "ophelia",
+  "ophelia-secp256k1",
+  "ophelia-ed25519",
+  "ophelia-quickcheck-types",
+  "ophelia-derive",
+  "ophelia-sm2",
+  "ophelia-bls12381",
+  "ophelia-hasher",
+  "ophelia-hasher-keccak256",
+  "ophelia-hasher-blake2b",
+  "ophelia-hasher-sm3",
 ]

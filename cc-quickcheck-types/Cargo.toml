@@ -1,9 +1,0 @@
-[package]
-name = "cc-quickcheck-types"
-version = "0.1.0"
-authors = ["zero.qn <zero.qn@outlook.com>"]
-edition = "2018"
-license = "MIT"
-
-[dependencies]
-quickcheck = "0.8"
