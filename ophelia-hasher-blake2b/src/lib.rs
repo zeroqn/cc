@@ -1,7 +1,5 @@
 use ophelia_hasher::{HashValue, Hasher};
 
-use std::convert::TryFrom;
-
 pub struct Blake2b {
     params: blake2b_simd::Params,
 }
