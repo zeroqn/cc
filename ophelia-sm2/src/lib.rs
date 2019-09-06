@@ -1,4 +1,4 @@
-use ophelia::{Crypto, CryptoError, HashValue, PrivateKey, PublicKey, Signature};
+use ophelia::{Bytes, Crypto, CryptoError, HashValue, PrivateKey, PublicKey, Signature};
 use ophelia_derive::SecretDebug;
 
 #[cfg(feature = "generate")]
@@ -22,7 +22,7 @@ pub struct SM2Signature(sm2::Signature);
 
 pub struct Sm2;
 
-impl Crypto<32, 33> for Sm2 {
+impl Crypto for Sm2 {
     #[cfg(feature = "generate")]
     type KeyGenerator = SM2PrivateKey;
     type PrivateKey = SM2PrivateKey;
@@ -64,7 +64,7 @@ impl TryFrom<&[u8]> for SM2PrivateKey {
     }
 }
 
-impl PrivateKey<32> for SM2PrivateKey {
+impl PrivateKey for SM2PrivateKey {
     type PublicKey = SM2PublicKey;
     type Signature = SM2Signature;
 
@@ -80,14 +80,11 @@ impl PrivateKey<32> for SM2PrivateKey {
         SM2PublicKey(pub_key)
     }
 
-    fn to_bytes(&self) -> [u8; 32] {
-        let mut bytes = [0u8; 32];
+    fn to_bytes(&self) -> Bytes {
         let vec_bytes = SM2_CONTEXT.serialize_seckey(&self.0);
-
         assert_eq!(vec_bytes.len(), 32);
-        bytes.copy_from_slice(&vec_bytes.as_slice()[..32]);
 
-        bytes
+        vec_bytes.into()
     }
 }
 
@@ -107,18 +104,15 @@ impl TryFrom<&[u8]> for SM2PublicKey {
     }
 }
 
-impl PublicKey<33> for SM2PublicKey {
+impl PublicKey for SM2PublicKey {
     type Signature = SM2Signature;
 
-    fn to_bytes(&self) -> [u8; 33] {
-        let mut bytes = [0u8; 33];
-        // true for compressed public key
+    fn to_bytes(&self) -> Bytes {
         let vec_bytes = SM2_CONTEXT.serialize_pubkey(&self.0, true);
-
+        // true for compressed public key
         assert_eq!(vec_bytes.len(), 33);
-        bytes.copy_from_slice(&vec_bytes.as_slice()[..33]);
 
-        bytes
+        vec_bytes.into()
     }
 }
 
@@ -147,8 +141,8 @@ impl Signature for SM2Signature {
         Ok(())
     }
 
-    fn to_bytes(&self) -> Vec<u8> {
-        self.0.der_encode()
+    fn to_bytes(&self) -> Bytes {
+        self.0.der_encode().into()
     }
 }
 

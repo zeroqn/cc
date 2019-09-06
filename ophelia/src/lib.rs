@@ -1,7 +1,6 @@
-#![feature(const_generics)]
-
 pub mod threshold;
 
+pub use bytes::Bytes;
 pub use ophelia_hasher::{HashValue, Hasher};
 
 #[cfg(feature = "generate")]
@@ -25,9 +24,7 @@ pub trait KeyGenerator {
     fn generate<R: CryptoRng + Rng + ?Sized>(rng: &mut R) -> Self::Output;
 }
 
-// TODO: reconsider to_bytes()? maybe return small vec? some cases do
-// allocation.
-pub trait PrivateKey<const LEN: usize>: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
+pub trait PrivateKey: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
     type PublicKey;
     type Signature;
 
@@ -35,13 +32,13 @@ pub trait PrivateKey<const LEN: usize>: for<'a> TryFrom<&'a [u8], Error = Crypto
 
     fn pub_key(&self) -> Self::PublicKey;
 
-    fn to_bytes(&self) -> [u8; LEN];
+    fn to_bytes(&self) -> Bytes;
 }
 
-pub trait PublicKey<const LEN: usize>: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
+pub trait PublicKey: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
     type Signature;
 
-    fn to_bytes(&self) -> [u8; LEN];
+    fn to_bytes(&self) -> Bytes;
 }
 
 // TODO: move verify to PublicKey trait
@@ -50,15 +47,14 @@ pub trait Signature: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
 
     fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), CryptoError>;
 
-    // TODO: Sm2 signature is not fixed size
-    fn to_bytes(&self) -> Vec<u8>;
+    fn to_bytes(&self) -> Bytes;
 }
 
-pub trait Crypto<const SK: usize, const PK: usize> {
+pub trait Crypto {
     #[cfg(feature = "generate")]
     type KeyGenerator: KeyGenerator<Output = Self::PrivateKey>;
-    type PrivateKey: PrivateKey<{ SK }, PublicKey = Self::PublicKey, Signature = Self::Signature>;
-    type PublicKey: PublicKey<{ PK }, Signature = Self::Signature>;
+    type PrivateKey: PrivateKey<PublicKey = Self::PublicKey, Signature = Self::Signature>;
+    type PublicKey: PublicKey<Signature = Self::Signature>;
     type Signature: Signature<PublicKey = Self::PublicKey>;
 
     #[cfg(feature = "generate")]

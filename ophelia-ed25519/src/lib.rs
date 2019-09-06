@@ -1,6 +1,6 @@
 // TODO: documents
 
-use ophelia::{Crypto, CryptoError, HashValue, PrivateKey, PublicKey, Signature};
+use ophelia::{Bytes, Crypto, CryptoError, HashValue, PrivateKey, PublicKey, Signature};
 use ophelia_derive::SecretDebug;
 
 #[cfg(any(test, feature = "generate"))]
@@ -21,7 +21,7 @@ pub struct Ed25519Signature(ed25519_dalek::Signature);
 
 pub struct Ed25519;
 
-impl Crypto<32, 32> for Ed25519 {
+impl Crypto for Ed25519 {
     #[cfg(feature = "generate")]
     type KeyGenerator = Ed25519PrivateKey;
     type PrivateKey = Ed25519PrivateKey;
@@ -67,7 +67,7 @@ impl TryFrom<&[u8]> for Ed25519PrivateKey {
     }
 }
 
-impl PrivateKey<32> for Ed25519PrivateKey {
+impl PrivateKey for Ed25519PrivateKey {
     type PublicKey = Ed25519PublicKey;
     type Signature = Ed25519Signature;
 
@@ -86,8 +86,8 @@ impl PrivateKey<32> for Ed25519PrivateKey {
         Ed25519PublicKey(pub_key)
     }
 
-    fn to_bytes(&self) -> [u8; 32] {
-        *self.0.as_bytes()
+    fn to_bytes(&self) -> Bytes {
+        self.0.as_bytes().as_ref().into()
     }
 }
 
@@ -140,11 +140,11 @@ impl TryFrom<&[u8]> for Ed25519PublicKey {
     }
 }
 
-impl PublicKey<32> for Ed25519PublicKey {
+impl PublicKey for Ed25519PublicKey {
     type Signature = Ed25519Signature;
 
-    fn to_bytes(&self) -> [u8; 32] {
-        *self.0.as_bytes()
+    fn to_bytes(&self) -> Bytes {
+        self.0.as_bytes().as_ref().into()
     }
 }
 
@@ -210,8 +210,8 @@ impl Signature for Ed25519Signature {
         Ok(())
     }
 
-    fn to_bytes(&self) -> Vec<u8> {
-        self.0.to_bytes().to_vec()
+    fn to_bytes(&self) -> Bytes {
+        self.0.to_bytes().as_ref().into()
     }
 }
 
@@ -219,7 +219,9 @@ impl Signature for Ed25519Signature {
 mod tests {
     use super::{generate_keypair, Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature};
 
-    use ophelia::{impl_quickcheck_arbitrary, CryptoError, HashValue, PrivateKey, PublicKey, Signature};
+    use ophelia::{
+        impl_quickcheck_arbitrary, CryptoError, HashValue, PrivateKey, PublicKey, Signature,
+    };
 
     use curve25519_dalek::scalar::Scalar;
     use quickcheck_macros::quickcheck;

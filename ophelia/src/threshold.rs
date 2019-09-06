@@ -1,6 +1,7 @@
 use crate::Signature;
 use crate::{CryptoError, HashValue};
 
+use bytes::Bytes;
 #[cfg(feature = "generate")]
 use rand::{CryptoRng, Rng};
 
@@ -13,7 +14,7 @@ pub trait KeySetGenerator {
     fn generate<R: CryptoRng + Rng + ?Sized>(rng: &mut R, threshold: usize) -> Self::Output;
 }
 
-pub trait PrivateKeySet<const LEN: usize>: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
+pub trait PrivateKeySet: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
     type PublicKeySet;
     type PrivateKeyShare;
 
@@ -21,10 +22,10 @@ pub trait PrivateKeySet<const LEN: usize>: for<'a> TryFrom<&'a [u8], Error = Cry
 
     fn private_key_share(&self, i: usize) -> Self::PrivateKeyShare;
 
-    fn to_bytes(&self) -> [u8; LEN];
+    fn to_bytes(&self) -> Bytes;
 }
 
-pub trait PublicKeySet<const LEN: usize>: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
+pub trait PublicKeySet: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
     type MasterPublicKey;
     type PublicKeyShare;
     type SignatureShare;
@@ -41,19 +42,17 @@ pub trait PublicKeySet<const LEN: usize>: for<'a> TryFrom<&'a [u8], Error = Cryp
 
     fn verify(&self, msg: &HashValue, sig: &Self::CombinedSignature) -> Result<(), CryptoError>;
 
-    fn to_bytes(&self) -> [u8; LEN];
+    fn to_bytes(&self) -> Bytes;
 }
 
-pub trait ThresholdCrypto<const SK_SET: usize, const PK_SET: usize> {
+pub trait ThresholdCrypto {
     #[cfg(feature = "generate")]
     type KeySetGenerator: KeySetGenerator<Output = Self::PrivateKeySet>;
     type PrivateKeySet: PrivateKeySet<
-        { SK_SET },
         PublicKeySet = Self::PublicKeySet,
         PrivateKeyShare = Self::PrivateKeyShare,
     >;
     type PublicKeySet: PublicKeySet<
-        { PK_SET },
         MasterPublicKey = Self::MasterPublicKey,
         PublicKeyShare = Self::PublicKeyShare,
         SignatureShare = Self::SignatureShare,

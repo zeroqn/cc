@@ -1,7 +1,7 @@
 pub mod threshold;
 pub use threshold::BLS12381Threshold;
 
-use ophelia::{Crypto, CryptoError, HashValue, PrivateKey, PublicKey, Signature};
+use ophelia::{Bytes, Crypto, CryptoError, HashValue, PrivateKey, PublicKey, Signature};
 use ophelia_derive::SecretDebug;
 
 #[cfg(any(test, feature = "generate"))]
@@ -25,7 +25,7 @@ pub struct BLS12381Signature(threshold_crypto::Signature);
 
 pub struct BLS12381;
 
-impl Crypto<32, 48> for BLS12381 {
+impl Crypto for BLS12381 {
     #[cfg(feature = "generate")]
     type KeyGenerator = BLS12381PrivateKey;
     type PrivateKey = BLS12381PrivateKey;
@@ -70,7 +70,7 @@ impl TryFrom<&[u8]> for BLS12381PrivateKey {
     }
 }
 
-impl PrivateKey<32> for BLS12381PrivateKey {
+impl PrivateKey for BLS12381PrivateKey {
     type PublicKey = BLS12381PublicKey;
     type Signature = BLS12381Signature;
 
@@ -90,18 +90,14 @@ impl PrivateKey<32> for BLS12381PrivateKey {
     /// # panic
     ///
     /// Panic when failed to serialize secret key
-    fn to_bytes(&self) -> [u8; 32] {
+    fn to_bytes(&self) -> Bytes {
         let ser_secret = {
             let secret = SerdeSecret(&self.0);
             bincode::serialize(&secret).expect("Should serialize secret key")
         };
 
         assert_eq!(ser_secret.len(), 32);
-
-        let mut bytes = [0u8; 32];
-        bytes.copy_from_slice(ser_secret.as_slice());
-
-        bytes
+        ser_secret.into()
     }
 }
 
@@ -128,11 +124,11 @@ impl TryFrom<&[u8]> for BLS12381PublicKey {
     }
 }
 
-impl PublicKey<48> for BLS12381PublicKey {
+impl PublicKey for BLS12381PublicKey {
     type Signature = BLS12381Signature;
 
-    fn to_bytes(&self) -> [u8; PK_SIZE] {
-        self.0.to_bytes()
+    fn to_bytes(&self) -> Bytes {
+        self.0.to_bytes().as_ref().into()
     }
 }
 
@@ -169,9 +165,8 @@ impl Signature for BLS12381Signature {
         }
     }
 
-    // TODO: optimize
-    fn to_bytes(&self) -> Vec<u8> {
-        self.0.to_bytes().to_vec()
+    fn to_bytes(&self) -> Bytes {
+        self.0.to_bytes().as_ref().into()
     }
 }
 

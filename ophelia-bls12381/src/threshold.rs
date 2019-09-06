@@ -1,7 +1,7 @@
 use crate::{BLS12381PublicKey, BLS12381Signature};
 
 use ophelia::threshold::{PrivateKeySet, PublicKeySet, ThresholdCrypto};
-use ophelia::{Crypto, CryptoError, HashValue, PrivateKey, PublicKey, Signature};
+use ophelia::{Bytes, Crypto, CryptoError, HashValue, PrivateKey, PublicKey, Signature};
 use ophelia_derive::SecretDebug;
 
 #[cfg(any(test, feature = "generate"))]
@@ -27,7 +27,7 @@ pub struct BLS12381SignatureShare(threshold_crypto::SignatureShare);
 
 pub struct BLS12381Threshold;
 
-impl ThresholdCrypto<72, 104> for BLS12381Threshold {
+impl ThresholdCrypto for BLS12381Threshold {
     #[cfg(feature = "generate")]
     type KeySetGenerator = BLS12381PrivateKeySet;
     type PrivateKeySet = BLS12381PrivateKeySet;
@@ -39,7 +39,7 @@ impl ThresholdCrypto<72, 104> for BLS12381Threshold {
     type CombinedSignature = BLS12381Signature;
 }
 
-impl Crypto<32, 48> for BLS12381Threshold {
+impl Crypto for BLS12381Threshold {
     #[cfg(feature = "generate")]
     type KeyGenerator = BLS12381PrivateKeyShare;
     type PrivateKey = BLS12381PrivateKeyShare;
@@ -104,7 +104,7 @@ impl TryFrom<&[u8]> for BLS12381PrivateKeySet {
     }
 }
 
-impl PrivateKeySet<72> for BLS12381PrivateKeySet {
+impl PrivateKeySet for BLS12381PrivateKeySet {
     type PublicKeySet = BLS12381PublicKeySet;
     type PrivateKeyShare = BLS12381PrivateKeyShare;
 
@@ -127,15 +127,11 @@ impl PrivateKeySet<72> for BLS12381PrivateKeySet {
     /// # panic
     ///
     /// Panic when failed to serialize secret key set
-    fn to_bytes(&self) -> [u8; 72] {
+    fn to_bytes(&self) -> Bytes {
         let ser_poly = bincode::serialize(&self.0).expect("Should serialize serect key set");
-
         assert_eq!(ser_poly.len(), 72);
 
-        let mut bytes = [0u8; 72];
-        bytes.copy_from_slice(ser_poly.as_slice());
-
-        bytes
+        ser_poly.into()
     }
 }
 
@@ -154,7 +150,7 @@ impl TryFrom<&[u8]> for BLS12381PublicKeySet {
     }
 }
 
-impl PublicKeySet<104> for BLS12381PublicKeySet {
+impl PublicKeySet for BLS12381PublicKeySet {
     type MasterPublicKey = BLS12381PublicKey;
     type PublicKeyShare = BLS12381PublicKeyShare;
     type SignatureShare = BLS12381SignatureShare;
@@ -196,15 +192,11 @@ impl PublicKeySet<104> for BLS12381PublicKeySet {
         sig.verify(msg, &master_pub_key)
     }
 
-    fn to_bytes(&self) -> [u8; 104] {
+    fn to_bytes(&self) -> Bytes {
         let ser_key = bincode::serialize(&self.0).expect("Should serialize public key set");
-
         assert_eq!(ser_key.len(), 104);
 
-        let mut bytes = [0u8; 104];
-        bytes.copy_from_slice(ser_key.as_slice());
-
-        bytes
+        ser_key.into()
     }
 }
 
@@ -228,7 +220,7 @@ impl TryFrom<&[u8]> for BLS12381PrivateKeyShare {
     }
 }
 
-impl PrivateKey<32> for BLS12381PrivateKeyShare {
+impl PrivateKey for BLS12381PrivateKeyShare {
     type PublicKey = BLS12381PublicKeyShare;
     type Signature = BLS12381SignatureShare;
 
@@ -244,18 +236,14 @@ impl PrivateKey<32> for BLS12381PrivateKeyShare {
         BLS12381PublicKeyShare(pub_key_share)
     }
 
-    fn to_bytes(&self) -> [u8; 32] {
+    fn to_bytes(&self) -> Bytes {
         let ser_secret = {
             let secret = SerdeSecret(&self.0);
             bincode::serialize(&secret).expect("Should serialize secret share key")
         };
 
         assert_eq!(ser_secret.len(), 32);
-
-        let mut bytes = [0u8; 32];
-        bytes.copy_from_slice(ser_secret.as_slice());
-
-        bytes
+        ser_secret.into()
     }
 }
 
@@ -281,11 +269,11 @@ impl TryFrom<&[u8]> for BLS12381PublicKeyShare {
     }
 }
 
-impl PublicKey<48> for BLS12381PublicKeyShare {
+impl PublicKey for BLS12381PublicKeyShare {
     type Signature = BLS12381SignatureShare;
 
-    fn to_bytes(&self) -> [u8; PK_SIZE] {
-        self.0.to_bytes()
+    fn to_bytes(&self) -> Bytes {
+        self.0.to_bytes().as_ref().into()
     }
 }
 
@@ -322,9 +310,8 @@ impl Signature for BLS12381SignatureShare {
         }
     }
 
-    // TODO: optimize
-    fn to_bytes(&self) -> Vec<u8> {
-        self.0.to_bytes().to_vec()
+    fn to_bytes(&self) -> Bytes {
+        self.0.to_bytes().as_ref().into()
     }
 }
 

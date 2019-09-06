@@ -1,4 +1,4 @@
-use ophelia::{Crypto, CryptoError, HashValue, PrivateKey, PublicKey, Signature};
+use ophelia::{Bytes, Crypto, CryptoError, HashValue, PrivateKey, PublicKey, Signature};
 use ophelia_derive::SecretDebug;
 
 #[cfg(any(test, feature = "generate"))]
@@ -29,7 +29,7 @@ pub struct HashedMessage<'a>(&'a HashValue);
 
 pub struct Secp256k1;
 
-impl Crypto<32, 33> for Secp256k1 {
+impl Crypto for Secp256k1 {
     #[cfg(feature = "generate")]
     type KeyGenerator = Secp256k1PrivateKey;
     type PrivateKey = Secp256k1PrivateKey;
@@ -74,7 +74,7 @@ impl TryFrom<&[u8]> for Secp256k1PrivateKey {
     }
 }
 
-impl PrivateKey<32> for Secp256k1PrivateKey {
+impl PrivateKey for Secp256k1PrivateKey {
     type PublicKey = Secp256k1PublicKey;
     type Signature = Secp256k1Signature;
 
@@ -91,9 +91,9 @@ impl PrivateKey<32> for Secp256k1PrivateKey {
         Secp256k1PublicKey(pub_key)
     }
 
-    fn to_bytes(&self) -> [u8; 32] {
-        let mut bytes = [0u8; 32];
-        bytes.copy_from_slice(&self.0[..]);
+    fn to_bytes(&self) -> Bytes {
+        let mut bytes = Bytes::with_capacity(32);
+        bytes.extend_from_slice(&self.0[..]);
 
         bytes
     }
@@ -113,11 +113,11 @@ impl TryFrom<&[u8]> for Secp256k1PublicKey {
     }
 }
 
-impl PublicKey<33> for Secp256k1PublicKey {
+impl PublicKey for Secp256k1PublicKey {
     type Signature = Secp256k1Signature;
 
-    fn to_bytes(&self) -> [u8; 33] {
-        self.0.serialize()
+    fn to_bytes(&self) -> Bytes {
+        self.0.serialize().as_ref().into()
     }
 }
 
@@ -148,8 +148,8 @@ impl Signature for Secp256k1Signature {
         Ok(())
     }
 
-    fn to_bytes(&self) -> Vec<u8> {
-        self.0.serialize_compact().to_vec()
+    fn to_bytes(&self) -> Bytes {
+        self.0.serialize_compact().as_ref().into()
     }
 }
 
