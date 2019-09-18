@@ -1,16 +1,24 @@
-use std::convert::TryFrom;
+use std::{convert::TryFrom, error::Error};
+
+use derive_more::Display;
 
 pub const HASH_VALUE_LENGTH: usize = 32;
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct HashValue([u8; HASH_VALUE_LENGTH]);
+#[derive(Debug, Display)]
+#[display(fmt = "wrong length: expect {}, got {}", expect, got)]
+pub struct WrongLengthError {
+    expect: usize,
+    got: usize,
+}
 
-#[derive(Clone, PartialEq, Debug)]
-pub struct InvalidLengthError;
+impl Error for WrongLengthError {}
 
 pub trait Hasher {
     fn digest(&self, data: &[u8]) -> HashValue;
 }
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct HashValue([u8; HASH_VALUE_LENGTH]);
 
 impl HashValue {
     pub const LENGTH: usize = HASH_VALUE_LENGTH;
@@ -25,11 +33,14 @@ impl HashValue {
 }
 
 impl TryFrom<&[u8]> for HashValue {
-    type Error = InvalidLengthError;
+    type Error = WrongLengthError;
 
     fn try_from(bytes: &[u8]) -> Result<HashValue, Self::Error> {
         if bytes.len() != HASH_VALUE_LENGTH {
-            return Err(InvalidLengthError);
+            return Err(WrongLengthError {
+                expect: HASH_VALUE_LENGTH,
+                got: bytes.len(),
+            });
         }
 
         let mut hash_bytes = [0u8; HASH_VALUE_LENGTH];
@@ -55,24 +66,6 @@ impl quickcheck::Arbitrary for HashValue {
         }
 
         HashValue(hash)
-    }
-}
-
-impl InvalidLengthError {
-    fn as_str(&self) -> &str {
-        "hash value: invalid length"
-    }
-}
-
-impl std::fmt::Display for InvalidLengthError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
-        f.write_str(self.as_str())
-    }
-}
-
-impl std::error::Error for InvalidLengthError {
-    fn description(&self) -> &str {
-        self.as_str()
     }
 }
 

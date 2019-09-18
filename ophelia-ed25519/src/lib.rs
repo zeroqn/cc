@@ -1,12 +1,15 @@
 // TODO: documents
 
-use ophelia::{Bytes, Crypto, CryptoError, HashValue, PrivateKey, PublicKey, Signature};
+use ophelia::{
+    Bytes, Crypto, CryptoError, CryptoKind, HashValue, PrivateKey, PublicKey, Signature,
+};
 use ophelia_derive::SecretDebug;
 
 #[cfg(any(test, feature = "generate"))]
 use rand::{CryptoRng, Rng};
 
 use curve25519_dalek::scalar::Scalar;
+use failure::Fail;
 
 use std::convert::TryFrom;
 
@@ -61,7 +64,7 @@ impl TryFrom<&[u8]> for Ed25519PrivateKey {
 
     fn try_from(bytes: &[u8]) -> Result<Ed25519PrivateKey, Self::Error> {
         let secret_key =
-            ed25519_dalek::SecretKey::from_bytes(bytes).map_err(|_| CryptoError::InvalidLength)?;
+            ed25519_dalek::SecretKey::from_bytes(bytes).map_err(Ed25519Error::priv_key)?;
 
         Ok(Ed25519PrivateKey(secret_key))
     }
@@ -109,7 +112,7 @@ impl Ed25519PublicKey {
         let compressed = curve25519_dalek::edwards::CompressedEdwardsY(bits);
         let point = compressed
             .decompress()
-            .ok_or(CryptoError::InvalidPublicKey)?;
+            .ok_or(CryptoError::Other("ed25519: not a point"))?;
 
         if point.is_small_order() {
             return Err(CryptoError::Other("ed25519: small subgroup"));
@@ -125,13 +128,14 @@ impl TryFrom<&[u8]> for Ed25519PublicKey {
 
     fn try_from(bytes: &[u8]) -> Result<Ed25519PublicKey, Self::Error> {
         if bytes.len() != ed25519_dalek::PUBLIC_KEY_LENGTH {
-            return Err(CryptoError::InvalidLength);
+            return Err(CryptoError::WrongLength {
+                expect: ed25519_dalek::PUBLIC_KEY_LENGTH,
+                got: bytes.len(),
+            });
         }
 
-        let dalek_pub_key = ed25519_dalek::PublicKey::from_bytes(bytes).map_err(|e| {
-            println!("{}", e);
-            CryptoError::InvalidLength
-        })?;
+        let dalek_pub_key =
+            ed25519_dalek::PublicKey::from_bytes(bytes).map_err(Ed25519Error::pub_key)?;
 
         let pub_key = Ed25519PublicKey(dalek_pub_key);
         pub_key.is_valid()?;
@@ -159,7 +163,8 @@ impl Ed25519Signature {
         let mut s_bits: [u8; 32] = [0; 32];
         s_bits.copy_from_slice(&bytes[32..]);
 
-        Scalar::from_canonical_bytes(s_bits).ok_or(CryptoError::InvalidSignature)?;
+        Scalar::from_canonical_bytes(s_bits)
+            .ok_or(CryptoError::Other("ed25519: not canonical scalar"))?;
 
         let mut r_bits: [u8; 32] = [0; 32];
         r_bits.copy_from_slice(&bytes[..32]);
@@ -167,7 +172,7 @@ impl Ed25519Signature {
         let compressed = curve25519_dalek::edwards::CompressedEdwardsY(r_bits);
         let point = compressed
             .decompress()
-            .ok_or(CryptoError::InvalidSignature)?;
+            .ok_or(CryptoError::Other("ed25519: not a point"))?;
 
         if point.is_small_order() {
             return Err(CryptoError::Other("ed25519: small subgroup"));
@@ -183,11 +188,14 @@ impl TryFrom<&[u8]> for Ed25519Signature {
 
     fn try_from(bytes: &[u8]) -> Result<Ed25519Signature, Self::Error> {
         if bytes.len() != ed25519_dalek::SIGNATURE_LENGTH {
-            return Err(CryptoError::InvalidLength);
+            return Err(CryptoError::WrongLength {
+                expect: ed25519_dalek::SIGNATURE_LENGTH,
+                got: bytes.len(),
+            });
         }
 
-        let dalek_sig = ed25519_dalek::Signature::from_bytes(bytes)
-            .map_err(|_| CryptoError::InvalidSignature)?;
+        let dalek_sig =
+            ed25519_dalek::Signature::from_bytes(bytes).map_err(Ed25519Error::signature)?;
 
         let sig = Ed25519Signature(dalek_sig);
         sig.is_valid()?;
@@ -205,7 +213,7 @@ impl Signature for Ed25519Signature {
         let pub_key = pub_key.0;
         pub_key
             .verify(msg.as_ref(), &self.0)
-            .map_err(|_| CryptoError::InvalidSignature)?;
+            .map_err(Ed25519Error::signature)?;
 
         Ok(())
     }
@@ -215,9 +223,47 @@ impl Signature for Ed25519Signature {
     }
 }
 
+// Error
+
+pub struct Ed25519Error {
+    kind: CryptoKind,
+    cause: ed25519_dalek::SignatureError,
+}
+
+impl Ed25519Error {
+    pub fn pub_key(cause: ed25519_dalek::SignatureError) -> Self {
+        Ed25519Error {
+            kind: CryptoKind::PublicKey,
+            cause,
+        }
+    }
+
+    pub fn priv_key(cause: ed25519_dalek::SignatureError) -> Self {
+        Ed25519Error {
+            kind: CryptoKind::PrivateKey,
+            cause,
+        }
+    }
+
+    pub fn signature(cause: ed25519_dalek::SignatureError) -> Self {
+        Ed25519Error {
+            kind: CryptoKind::Signature,
+            cause,
+        }
+    }
+}
+
+impl From<Ed25519Error> for CryptoError {
+    fn from(err: Ed25519Error) -> CryptoError {
+        CryptoError::from(err.kind).with_cause(Box::new(err.cause.compat()))
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{generate_keypair, Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature};
+    use super::{
+        generate_keypair, Ed25519Error, Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature,
+    };
 
     use ophelia::{
         impl_quickcheck_arbitrary, CryptoError, HashValue, PrivateKey, PublicKey, Signature,
@@ -389,8 +435,8 @@ mod tests {
 
     impl Ed25519Signature {
         fn from_bytes_unchecked(bytes: &[u8]) -> Result<Ed25519Signature, CryptoError> {
-            let sig = ed25519_dalek::Signature::from_bytes(bytes)
-                .map_err(|_| CryptoError::InvalidSignature)?;
+            let sig =
+                ed25519_dalek::Signature::from_bytes(bytes).map_err(Ed25519Error::signature)?;
 
             Ok(Ed25519Signature(sig))
         }
@@ -420,10 +466,7 @@ mod tests {
             assert!(ed25519_dalek::PublicKey::from_bytes(point_bytes).is_ok());
 
             // Should not pass in our implementation
-            assert_eq!(
-                Ed25519PublicKey::try_from(point_bytes as &[u8]),
-                Err(CryptoError::Other("ed25519: small subgroup"))
-            );
+            assert!(Ed25519PublicKey::try_from(point_bytes as &[u8]).is_err());
         }
     }
 
@@ -462,10 +505,7 @@ mod tests {
             .is_ok());
 
         // Modified signature should not pass in our implementation
-        assert_eq!(
-            Ed25519Signature::try_from(&modified_sig_bytes as &[u8]),
-            Err(CryptoError::InvalidSignature)
-        );
+        assert!(Ed25519Signature::try_from(&modified_sig_bytes as &[u8]).is_err());
 
         let modified_sig: Ed25519Signature =
             Ed25519Signature::from_bytes_unchecked(&modified_sig_bytes as &[u8]).unwrap();

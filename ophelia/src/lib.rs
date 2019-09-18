@@ -1,4 +1,6 @@
+pub mod error;
 pub mod threshold;
+pub use error::{CryptoError, CryptoKind};
 
 pub use bytes::Bytes;
 pub use ophelia_hasher::{HashValue, Hasher};
@@ -7,15 +9,6 @@ pub use ophelia_hasher::{HashValue, Hasher};
 use rand::{CryptoRng, Rng};
 
 use std::convert::TryFrom;
-
-#[derive(Debug, PartialEq)]
-pub enum CryptoError {
-    InvalidLength,
-    InvalidSignature,
-    InvalidPublicKey,
-    InvalidPrivateKey,
-    Other(&'static str),
-}
 
 #[cfg(feature = "generate")]
 pub trait KeyGenerator {
@@ -87,12 +80,6 @@ pub trait Crypto {
 
         sig.verify(&msg, &pub_key)?;
         Ok(())
-    }
-}
-
-impl From<ophelia_hasher::InvalidLengthError> for CryptoError {
-    fn from(_: ophelia_hasher::InvalidLengthError) -> CryptoError {
-        CryptoError::InvalidLength
     }
 }
 

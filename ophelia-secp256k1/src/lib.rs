@@ -1,4 +1,6 @@
-use ophelia::{Bytes, Crypto, CryptoError, HashValue, PrivateKey, PublicKey, Signature};
+use ophelia::{
+    Bytes, Crypto, CryptoError, CryptoKind, HashValue, PrivateKey, PublicKey, Signature,
+};
 use ophelia_derive::SecretDebug;
 
 #[cfg(any(test, feature = "generate"))]
@@ -161,16 +163,15 @@ impl From<Secp256k1Error> for CryptoError {
     fn from(err: Secp256k1Error) -> Self {
         use secp256k1::Error;
 
-        match err.0 {
-            Error::IncorrectSignature => CryptoError::InvalidSignature,
-            Error::InvalidPublicKey => CryptoError::InvalidPublicKey,
-            Error::InvalidSignature => CryptoError::InvalidSignature,
-            Error::InvalidSecretKey => CryptoError::InvalidPrivateKey,
-            Error::InvalidRecoveryId => CryptoError::InvalidSignature,
-            Error::InvalidMessage => CryptoError::Other("secp256k1: invalid messag"),
-            Error::InvalidTweak => CryptoError::Other("secp256k1: bad tweak"),
-            Error::NotEnoughMemory => CryptoError::Other("secp256k1: not enough memory"),
-        }
+        let kind = match &err.0 {
+            Error::IncorrectSignature => CryptoKind::Signature,
+            Error::InvalidPublicKey => CryptoKind::PublicKey,
+            Error::InvalidSignature => CryptoKind::Signature,
+            Error::InvalidSecretKey => CryptoKind::PrivateKey,
+            _ => return CryptoError::Unexpected(Box::new(err.0)),
+        };
+
+        CryptoError::from(kind).with_cause(Box::new(err.0))
     }
 }
 
@@ -221,21 +222,30 @@ mod tests {
 
     #[quickcheck]
     fn prop_private_key_bytes_serialization(priv_key: Secp256k1PrivateKey) -> bool {
-        Secp256k1PrivateKey::try_from(priv_key.to_bytes().as_ref()) == Ok(priv_key)
+        match Secp256k1PrivateKey::try_from(priv_key.to_bytes().as_ref()) {
+            Ok(seckey) => seckey == priv_key,
+            Err(_) => false,
+        }
     }
 
     #[quickcheck]
     fn prop_public_key_bytes_serialization(priv_key: Secp256k1PrivateKey) -> bool {
         let pub_key = priv_key.pub_key();
 
-        Secp256k1PublicKey::try_from(pub_key.to_bytes().as_ref()) == Ok(pub_key)
+        match Secp256k1PublicKey::try_from(pub_key.to_bytes().as_ref()) {
+            Ok(pubkey) => pubkey == pub_key,
+            Err(_) => false,
+        }
     }
 
     #[quickcheck]
     fn prop_signature_bytes_serialization(msg: HashValue, priv_key: Secp256k1PrivateKey) -> bool {
         let sig = priv_key.sign_message(&msg);
 
-        Secp256k1Signature::try_from(sig.to_bytes().as_ref()) == Ok(sig)
+        match Secp256k1Signature::try_from(sig.to_bytes().as_ref()) {
+            Ok(s) => s == sig,
+            Err(_) => false,
+        }
     }
 
     #[quickcheck]

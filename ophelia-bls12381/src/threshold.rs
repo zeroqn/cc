@@ -1,7 +1,9 @@
-use crate::{BLS12381PublicKey, BLS12381Signature};
+use crate::{ensure_length, BLS12381PublicKey, BLS12381Signature};
 
 use ophelia::threshold::{PrivateKeySet, PublicKeySet, ThresholdCrypto};
-use ophelia::{Bytes, Crypto, CryptoError, HashValue, PrivateKey, PublicKey, Signature};
+use ophelia::{
+    Bytes, Crypto, CryptoError, CryptoKind, HashValue, PrivateKey, PublicKey, Signature,
+};
 use ophelia_derive::SecretDebug;
 
 #[cfg(any(test, feature = "generate"))]
@@ -97,8 +99,9 @@ impl TryFrom<&[u8]> for BLS12381PrivateKeySet {
     type Error = CryptoError;
 
     fn try_from(bytes: &[u8]) -> Result<BLS12381PrivateKeySet, Self::Error> {
-        let poly =
-            bincode::deserialize::<Poly>(bytes).map_err(|_| CryptoError::InvalidPrivateKey)?;
+        let poly = bincode::deserialize::<Poly>(bytes).map_err(|err| {
+            CryptoError::from(CryptoKind::PrivateKeySet).with_cause(Box::new(err))
+        })?;
 
         Ok(BLS12381PrivateKeySet(poly))
     }
@@ -144,7 +147,7 @@ impl TryFrom<&[u8]> for BLS12381PublicKeySet {
 
     fn try_from(bytes: &[u8]) -> Result<BLS12381PublicKeySet, Self::Error> {
         let pub_key_set = bincode::deserialize::<threshold_crypto::PublicKeySet>(bytes)
-            .map_err(|_| CryptoError::InvalidPublicKey)?;
+            .map_err(|err| CryptoError::from(CryptoKind::PublicKeySet).with_cause(Box::new(err)))?;
 
         Ok(BLS12381PublicKeySet(pub_key_set))
     }
@@ -209,12 +212,12 @@ impl TryFrom<&[u8]> for BLS12381PrivateKeyShare {
     type Error = CryptoError;
 
     fn try_from(bytes: &[u8]) -> Result<BLS12381PrivateKeyShare, Self::Error> {
-        if bytes.len() != 32 {
-            return Err(CryptoError::InvalidLength);
-        }
+        ensure_length(32, bytes)?;
 
         let secret_key_share = bincode::deserialize::<threshold_crypto::SecretKeyShare>(bytes)
-            .map_err(|_| CryptoError::InvalidPrivateKey)?;
+            .map_err(|err| {
+                CryptoError::from(CryptoKind::PrivateKeyShare).with_cause(Box::new(err))
+            })?;
 
         Ok(BLS12381PrivateKeyShare(secret_key_share))
     }
@@ -255,15 +258,13 @@ impl TryFrom<&[u8]> for BLS12381PublicKeyShare {
     type Error = CryptoError;
 
     fn try_from(bytes: &[u8]) -> Result<BLS12381PublicKeyShare, Self::Error> {
-        if bytes.len() != PK_SIZE {
-            return Err(CryptoError::InvalidLength);
-        }
+        ensure_length(PK_SIZE, bytes)?;
 
         let mut key_bytes = [0u8; PK_SIZE];
         key_bytes.copy_from_slice(bytes);
 
         let pub_key = threshold_crypto::PublicKeyShare::from_bytes(key_bytes)
-            .map_err(|_| CryptoError::InvalidPublicKey)?;
+            .map_err(|_| CryptoKind::PublicKeyShare)?;
 
         Ok(BLS12381PublicKeyShare(pub_key))
     }
@@ -285,15 +286,13 @@ impl TryFrom<&[u8]> for BLS12381SignatureShare {
     type Error = CryptoError;
 
     fn try_from(bytes: &[u8]) -> Result<BLS12381SignatureShare, Self::Error> {
-        if bytes.len() != SIG_SIZE {
-            return Err(CryptoError::InvalidLength);
-        }
+        ensure_length(SIG_SIZE, bytes)?;
 
         let mut sig_bytes = [0u8; SIG_SIZE];
         sig_bytes.copy_from_slice(bytes);
 
         let sig = threshold_crypto::SignatureShare::from_bytes(sig_bytes)
-            .map_err(|_| CryptoError::InvalidSignature)?;
+            .map_err(|_| CryptoKind::Signature)?;
 
         Ok(BLS12381SignatureShare(sig))
     }
@@ -306,7 +305,7 @@ impl Signature for BLS12381SignatureShare {
         if pub_key.0.verify(&self.0, msg.as_ref()) {
             Ok(())
         } else {
-            Err(CryptoError::InvalidSignature)
+            Err(CryptoKind::Signature.into())
         }
     }
 
@@ -382,21 +381,30 @@ mod tests {
 
     #[quickcheck]
     fn prop_private_key_set_bytes_serialization(priv_key_set: BLS12381PrivateKeySet) -> bool {
-        BLS12381PrivateKeySet::try_from(priv_key_set.to_bytes().as_ref()) == Ok(priv_key_set)
+        match BLS12381PrivateKeySet::try_from(priv_key_set.to_bytes().as_ref()) {
+            Ok(set) => set == priv_key_set,
+            Err(_) => false,
+        }
     }
 
     #[quickcheck]
     fn prop_public_key_set_bytes_serialization(priv_key_set: BLS12381PrivateKeySet) -> bool {
         let pub_key_set = priv_key_set.public_key_set();
 
-        BLS12381PublicKeySet::try_from(pub_key_set.to_bytes().as_ref()) == Ok(pub_key_set)
+        match BLS12381PublicKeySet::try_from(pub_key_set.to_bytes().as_ref()) {
+            Ok(set) => set == pub_key_set,
+            Err(_) => false,
+        }
     }
 
     #[quickcheck]
     fn prop_private_key_share_bytes_serialization(priv_key_set: BLS12381PrivateKeySet) -> bool {
         let priv_key_share = priv_key_set.private_key_share(0);
 
-        BLS12381PrivateKeyShare::try_from(priv_key_share.to_bytes().as_ref()) == Ok(priv_key_share)
+        match BLS12381PrivateKeyShare::try_from(priv_key_share.to_bytes().as_ref()) {
+            Ok(share) => share == priv_key_share,
+            Err(_) => false,
+        }
     }
 
     #[quickcheck]
@@ -404,7 +412,10 @@ mod tests {
         let priv_key_share = priv_key_set.private_key_share(0);
         let pub_key_share = priv_key_share.pub_key();
 
-        BLS12381PublicKeyShare::try_from(pub_key_share.to_bytes().as_ref()) == Ok(pub_key_share)
+        match BLS12381PublicKeyShare::try_from(pub_key_share.to_bytes().as_ref()) {
+            Ok(share) => share == pub_key_share,
+            Err(_) => false,
+        }
     }
 
     #[quickcheck]
@@ -415,6 +426,9 @@ mod tests {
         let priv_key_share = priv_key_set.private_key_share(0);
         let sig_share = priv_key_share.sign_message(&msg);
 
-        BLS12381SignatureShare::try_from(sig_share.to_bytes().as_ref()) == Ok(sig_share)
+        match BLS12381SignatureShare::try_from(sig_share.to_bytes().as_ref()) {
+            Ok(share) => share == sig_share,
+            Err(_) => false,
+        }
     }
 }

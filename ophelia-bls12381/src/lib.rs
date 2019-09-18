@@ -1,7 +1,11 @@
+mod common;
 pub mod threshold;
+use common::ensure_length;
 pub use threshold::BLS12381Threshold;
 
-use ophelia::{Bytes, Crypto, CryptoError, HashValue, PrivateKey, PublicKey, Signature};
+use ophelia::{
+    Bytes, Crypto, CryptoError, CryptoKind, HashValue, PrivateKey, PublicKey, Signature,
+};
 use ophelia_derive::SecretDebug;
 
 #[cfg(any(test, feature = "generate"))]
@@ -64,7 +68,7 @@ impl TryFrom<&[u8]> for BLS12381PrivateKey {
 
     fn try_from(bytes: &[u8]) -> Result<BLS12381PrivateKey, Self::Error> {
         let secret_key = bincode::deserialize::<threshold_crypto::SecretKey>(bytes)
-            .map_err(|_| CryptoError::InvalidPrivateKey)?;
+            .map_err(|_| CryptoKind::PrivateKey)?;
 
         Ok(BLS12381PrivateKey(secret_key))
     }
@@ -110,15 +114,13 @@ impl TryFrom<&[u8]> for BLS12381PublicKey {
     type Error = CryptoError;
 
     fn try_from(bytes: &[u8]) -> Result<BLS12381PublicKey, Self::Error> {
-        if bytes.len() != PK_SIZE {
-            return Err(CryptoError::InvalidLength);
-        }
+        ensure_length(PK_SIZE, bytes)?;
 
         let mut key_bytes = [0u8; PK_SIZE];
         key_bytes.copy_from_slice(bytes);
 
         let pub_key = threshold_crypto::PublicKey::from_bytes(key_bytes)
-            .map_err(|_| CryptoError::InvalidPublicKey)?;
+            .map_err(|_| CryptoKind::PublicKey)?;
 
         Ok(BLS12381PublicKey(pub_key))
     }
@@ -140,15 +142,13 @@ impl TryFrom<&[u8]> for BLS12381Signature {
     type Error = CryptoError;
 
     fn try_from(bytes: &[u8]) -> Result<BLS12381Signature, Self::Error> {
-        if bytes.len() != SIG_SIZE {
-            return Err(CryptoError::InvalidLength);
-        }
+        ensure_length(SIG_SIZE, bytes)?;
 
         let mut sig_bytes = [0u8; SIG_SIZE];
         sig_bytes.copy_from_slice(bytes);
 
         let sig = threshold_crypto::Signature::from_bytes(sig_bytes)
-            .map_err(|_| CryptoError::InvalidSignature)?;
+            .map_err(|_| CryptoKind::Signature)?;
 
         Ok(BLS12381Signature(sig))
     }
@@ -161,7 +161,7 @@ impl Signature for BLS12381Signature {
         if pub_key.0.verify(&self.0, msg.as_ref()) {
             Ok(())
         } else {
-            Err(CryptoError::InvalidSignature)
+            Err(CryptoKind::Signature.into())
         }
     }
 
@@ -201,21 +201,30 @@ mod tests {
 
     #[quickcheck]
     fn prop_private_key_bytes_serialization(priv_key: BLS12381PrivateKey) -> bool {
-        BLS12381PrivateKey::try_from(priv_key.to_bytes().as_ref()) == Ok(priv_key)
+        match BLS12381PrivateKey::try_from(priv_key.to_bytes().as_ref()) {
+            Ok(sec_key) => sec_key == priv_key,
+            Err(_) => false,
+        }
     }
 
     #[quickcheck]
     fn prop_public_key_bytes_serialization(priv_key: BLS12381PrivateKey) -> bool {
         let pub_key = priv_key.pub_key();
 
-        BLS12381PublicKey::try_from(pub_key.to_bytes().as_ref()) == Ok(pub_key)
+        match BLS12381PublicKey::try_from(pub_key.to_bytes().as_ref()) {
+            Ok(pubkey) => pubkey == pub_key,
+            Err(_) => false,
+        }
     }
 
     #[quickcheck]
     fn prop_signature_bytes_serialization(msg: HashValue, priv_key: BLS12381PrivateKey) -> bool {
         let sig = priv_key.sign_message(&msg);
 
-        BLS12381Signature::try_from(sig.to_bytes().as_ref()) == Ok(sig)
+        match BLS12381Signature::try_from(sig.to_bytes().as_ref()) {
+            Ok(s) => s == sig,
+            Err(_) => false,
+        }
     }
 
     #[quickcheck]

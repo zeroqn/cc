@@ -13,6 +13,7 @@ ed25519-dalek = { version = "1.0.0-pre.1", features = [ "asm" ] }
 curve25519-dalek = "1.2"
 # ed25519 requires rand 0.6
 rand = "0.6"
+failure = "0.1.5"
 
 [dev-dependencies]
 # FIXME: compiler crash if we add "generate"

@@ -1,4 +1,6 @@
-use ophelia::{Bytes, Crypto, CryptoError, HashValue, PrivateKey, PublicKey, Signature};
+use ophelia::{
+    Bytes, Crypto, CryptoError, CryptoKind, HashValue, PrivateKey, PublicKey, Signature,
+};
 use ophelia_derive::SecretDebug;
 
 #[cfg(feature = "generate")]
@@ -58,7 +60,7 @@ impl TryFrom<&[u8]> for SM2PrivateKey {
     fn try_from(bytes: &[u8]) -> Result<SM2PrivateKey, Self::Error> {
         let secret_key = SM2_CONTEXT
             .load_seckey(bytes)
-            .map_err(|_| CryptoError::InvalidPrivateKey)?;
+            .map_err(|_| CryptoKind::PrivateKey)?;
 
         Ok(SM2PrivateKey(secret_key))
     }
@@ -98,7 +100,7 @@ impl TryFrom<&[u8]> for SM2PublicKey {
     fn try_from(bytes: &[u8]) -> Result<SM2PublicKey, Self::Error> {
         let pub_key = SM2_CONTEXT
             .load_pubkey(bytes)
-            .map_err(|_| CryptoError::InvalidPublicKey)?;
+            .map_err(|_| CryptoKind::PublicKey)?;
 
         Ok(SM2PublicKey(pub_key))
     }
@@ -124,7 +126,7 @@ impl TryFrom<&[u8]> for SM2Signature {
     type Error = CryptoError;
 
     fn try_from(bytes: &[u8]) -> Result<SM2Signature, Self::Error> {
-        let sig = sm2::Signature::der_decode(bytes).map_err(|_| CryptoError::InvalidSignature)?;
+        let sig = sm2::Signature::der_decode(bytes).map_err(|_| CryptoKind::Signature)?;
 
         Ok(SM2Signature(sig))
     }
@@ -135,7 +137,7 @@ impl Signature for SM2Signature {
 
     fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), CryptoError> {
         if !SM2_CONTEXT.verify_raw(msg.as_ref(), &pub_key.0, &self.0) {
-            return Err(CryptoError::InvalidSignature);
+            return Err(CryptoKind::Signature.into());
         }
 
         Ok(())
@@ -175,7 +177,10 @@ mod tests {
 
     #[quickcheck]
     fn prop_private_key_bytes_serialization(priv_key: SM2PrivateKey) -> bool {
-        SM2PrivateKey::try_from(priv_key.to_bytes().as_ref()) == Ok(priv_key)
+        match SM2PrivateKey::try_from(priv_key.to_bytes().as_ref()) {
+            Ok(seckey) => seckey == priv_key,
+            Err(_) => false,
+        }
     }
 
     #[quickcheck]
