@@ -1,5 +1,5 @@
-use crate::Signature;
 use crate::{CryptoError, HashValue};
+use crate::{PublicKey, Signature};
 
 use bytes::Bytes;
 #[cfg(feature = "generate")]
@@ -60,7 +60,7 @@ pub trait ThresholdCrypto {
     >;
     type MasterPublicKey;
     type PrivateKeyShare;
-    type PublicKeyShare;
+    type PublicKeyShare: PublicKey<Signature = Self::SignatureShare>;
     type SignatureShare: Signature<PublicKey = Self::PublicKeyShare>;
     type CombinedSignature: for<'a> TryFrom<&'a [u8], Error = CryptoError>;
 
@@ -110,5 +110,17 @@ pub trait ThresholdCrypto {
         let sig = Self::CombinedSignature::try_from(sig)?;
 
         pub_key_set.verify(&msg, &sig)
+    }
+
+    fn verify_share_signature(
+        pub_key_share: &[u8],
+        msg: &[u8],
+        sig_share: &[u8],
+    ) -> Result<(), CryptoError> {
+        let pub_key_share = Self::PublicKeyShare::try_from(pub_key_share)?;
+        let msg = HashValue::try_from(msg)?;
+        let sig_share = Self::SignatureShare::try_from(sig_share)?;
+
+        sig_share.verify(&msg, &pub_key_share)
     }
 }
