@@ -15,10 +15,10 @@ lazy_static! {
     static ref ENGINE: secp256k1::Secp256k1<All> = secp256k1::Secp256k1::new();
 }
 
-#[derive(SecretDebug, PartialEq)]
+#[derive(SecretDebug, PartialEq, Clone)]
 pub struct Secp256k1PrivateKey(secp256k1::SecretKey);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Secp256k1PublicKey(secp256k1::PublicKey);
 
 #[derive(Debug, PartialEq)]
