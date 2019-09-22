@@ -15,9 +15,10 @@ lazy_static! {
     static ref SM2_CONTEXT: SigCtx = SigCtx::new();
 }
 
-#[derive(SecretDebug, PartialEq)]
+#[derive(SecretDebug, PartialEq, Clone)]
 pub struct SM2PrivateKey(sm2::Seckey);
 
+#[derive(Clone)]
 pub struct SM2PublicKey(sm2::Pubkey);
 
 pub struct SM2Signature(sm2::Signature);
@@ -129,6 +130,17 @@ impl TryFrom<&[u8]> for SM2Signature {
         let sig = sm2::Signature::der_decode(bytes).map_err(|_| CryptoKind::Signature)?;
 
         Ok(SM2Signature(sig))
+    }
+}
+
+impl Clone for SM2Signature {
+    fn clone(&self) -> Self {
+        let sig_r = self.0.get_r();
+        let sig_s = self.0.get_s();
+
+        let sig = sm2::Signature::new(&sig_r.to_bytes_be(), &sig_s.to_bytes_be());
+
+        SM2Signature(sig)
     }
 }
 

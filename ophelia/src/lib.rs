@@ -17,7 +17,7 @@ pub trait KeyGenerator {
     fn generate<R: CryptoRng + Rng + ?Sized>(rng: &mut R) -> Self::Output;
 }
 
-pub trait PrivateKey: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
+pub trait PrivateKey: for<'a> TryFrom<&'a [u8], Error = CryptoError> + Clone {
     type PublicKey;
     type Signature;
 
@@ -28,14 +28,14 @@ pub trait PrivateKey: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
     fn to_bytes(&self) -> Bytes;
 }
 
-pub trait PublicKey: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
+pub trait PublicKey: for<'a> TryFrom<&'a [u8], Error = CryptoError> + Clone {
     type Signature;
 
     fn to_bytes(&self) -> Bytes;
 }
 
 // TODO: move verify to PublicKey trait
-pub trait Signature: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
+pub trait Signature: for<'a> TryFrom<&'a [u8], Error = CryptoError> + Clone {
     type PublicKey;
 
     fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), CryptoError>;
@@ -90,12 +90,6 @@ pub use ophelia_quickcheck_types::Octet32;
 #[macro_export]
 macro_rules! impl_quickcheck_arbitrary {
     ($priv_key:ident) => {
-        impl Clone for $priv_key {
-            fn clone(&self) -> Self {
-                Self::try_from(self.to_bytes().as_ref()).unwrap()
-            }
-        }
-
         impl quickcheck::Arbitrary for $priv_key {
             fn arbitrary<G: quickcheck::Gen>(g: &mut G) -> $priv_key {
                 let octet32 = ophelia::Octet32::arbitrary(g);

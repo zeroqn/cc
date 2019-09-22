@@ -14,17 +14,17 @@ use threshold_crypto::{poly::Poly, PK_SIZE, SIG_SIZE};
 
 use std::convert::TryFrom;
 
-#[derive(SecretDebug, PartialEq)]
+#[derive(SecretDebug, PartialEq, Clone)]
 pub struct BLS12381PrivateKeySet(threshold_crypto::poly::Poly);
-#[derive(SecretDebug, PartialEq)]
+#[derive(SecretDebug, PartialEq, Clone)]
 pub struct BLS12381PrivateKeyShare(threshold_crypto::SecretKeyShare);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct BLS12381PublicKeySet(threshold_crypto::PublicKeySet);
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct BLS12381PublicKeyShare(threshold_crypto::PublicKeyShare);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct BLS12381SignatureShare(threshold_crypto::SignatureShare);
 
 pub struct BLS12381Threshold;
@@ -329,12 +329,6 @@ mod tests {
     use threshold_crypto::poly::Poly;
 
     use std::convert::TryFrom;
-
-    impl Clone for BLS12381PrivateKeySet {
-        fn clone(&self) -> Self {
-            Self::try_from(self.to_bytes().as_ref()).expect("Clone")
-        }
-    }
 
     impl Arbitrary for BLS12381PrivateKeySet {
         fn arbitrary<G: Gen>(mut g: &mut G) -> BLS12381PrivateKeySet {

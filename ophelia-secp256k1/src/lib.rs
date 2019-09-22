@@ -21,7 +21,7 @@ pub struct Secp256k1PrivateKey(secp256k1::SecretKey);
 #[derive(Debug, PartialEq, Clone)]
 pub struct Secp256k1PublicKey(secp256k1::PublicKey);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Secp256k1Signature(secp256k1::Signature);
 
 #[derive(Debug, PartialEq)]
