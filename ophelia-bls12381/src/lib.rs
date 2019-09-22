@@ -18,13 +18,13 @@ use threshold_crypto::{PK_SIZE, SIG_SIZE};
 
 use std::convert::TryFrom;
 
-#[derive(SecretDebug, PartialEq)]
+#[derive(SecretDebug, PartialEq, Clone)]
 pub struct BLS12381PrivateKey(threshold_crypto::SecretKey);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct BLS12381PublicKey(threshold_crypto::PublicKey);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct BLS12381Signature(threshold_crypto::Signature);
 
 pub struct BLS12381;

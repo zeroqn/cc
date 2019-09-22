@@ -16,10 +16,10 @@ use std::convert::TryFrom;
 #[derive(SecretDebug)]
 pub struct Ed25519PrivateKey(ed25519_dalek::SecretKey);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Ed25519PublicKey(ed25519_dalek::PublicKey);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Ed25519Signature(ed25519_dalek::Signature);
 
 pub struct Ed25519;
@@ -67,6 +67,12 @@ impl TryFrom<&[u8]> for Ed25519PrivateKey {
             ed25519_dalek::SecretKey::from_bytes(bytes).map_err(Ed25519Error::priv_key)?;
 
         Ok(Ed25519PrivateKey(secret_key))
+    }
+}
+
+impl Clone for Ed25519PrivateKey {
+    fn clone(&self) -> Self {
+        Self::try_from(self.0.as_bytes().as_ref()).expect("clone infallible")
     }
 }
 

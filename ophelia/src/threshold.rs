@@ -14,7 +14,7 @@ pub trait KeySetGenerator {
     fn generate<R: CryptoRng + Rng + ?Sized>(rng: &mut R, threshold: usize) -> Self::Output;
 }
 
-pub trait PrivateKeySet: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
+pub trait PrivateKeySet: for<'a> TryFrom<&'a [u8], Error = CryptoError> + Clone {
     type PublicKeySet;
     type PrivateKeyShare;
 
@@ -25,7 +25,7 @@ pub trait PrivateKeySet: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
     fn to_bytes(&self) -> Bytes;
 }
 
-pub trait PublicKeySet: for<'a> TryFrom<&'a [u8], Error = CryptoError> {
+pub trait PublicKeySet: for<'a> TryFrom<&'a [u8], Error = CryptoError> + Clone {
     type MasterPublicKey;
     type PublicKeyShare;
     type SignatureShare;
