@@ -78,6 +78,8 @@ impl PrivateKey for BLS12381PrivateKey {
     type PublicKey = BLS12381PublicKey;
     type Signature = BLS12381Signature;
 
+    const LENGTH: usize = 32;
+
     fn sign_message(&self, msg: &HashValue) -> Self::Signature {
         let sig = self.0.sign(msg.as_ref());
 
@@ -128,6 +130,8 @@ impl TryFrom<&[u8]> for BLS12381PublicKey {
 
 impl PublicKey for BLS12381PublicKey {
     type Signature = BLS12381Signature;
+
+    const LENGTH: usize = PK_SIZE;
 
     fn to_bytes(&self) -> Bytes {
         self.0.to_bytes().as_ref().into()

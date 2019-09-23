@@ -111,6 +111,8 @@ impl PrivateKeySet for BLS12381PrivateKeySet {
     type PublicKeySet = BLS12381PublicKeySet;
     type PrivateKeyShare = BLS12381PrivateKeyShare;
 
+    const LENGTH: usize = 72;
+
     fn public_key_set(&self) -> Self::PublicKeySet {
         let secret_key_set = threshold_crypto::SecretKeySet::from(self.0.clone());
 
@@ -158,6 +160,8 @@ impl PublicKeySet for BLS12381PublicKeySet {
     type PublicKeyShare = BLS12381PublicKeyShare;
     type SignatureShare = BLS12381SignatureShare;
     type CombinedSignature = BLS12381Signature;
+
+    const LENGTH: usize = 104;
 
     fn master_public_key(&self) -> Self::MasterPublicKey {
         let master_key = self.0.public_key();
@@ -227,6 +231,8 @@ impl PrivateKey for BLS12381PrivateKeyShare {
     type PublicKey = BLS12381PublicKeyShare;
     type Signature = BLS12381SignatureShare;
 
+    const LENGTH: usize = 32;
+
     fn sign_message(&self, msg: &HashValue) -> Self::Signature {
         let sig = self.0.sign(msg.as_ref());
 
@@ -272,6 +278,8 @@ impl TryFrom<&[u8]> for BLS12381PublicKeyShare {
 
 impl PublicKey for BLS12381PublicKeyShare {
     type Signature = BLS12381SignatureShare;
+
+    const LENGTH: usize = 48;
 
     fn to_bytes(&self) -> Bytes {
         self.0.to_bytes().as_ref().into()

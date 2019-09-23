@@ -71,6 +71,8 @@ impl PrivateKey for SM2PrivateKey {
     type PublicKey = SM2PublicKey;
     type Signature = SM2Signature;
 
+    const LENGTH: usize = 32;
+
     fn sign_message(&self, msg: &HashValue) -> Self::Signature {
         let sig = SM2_CONTEXT.sign_raw(msg.as_ref(), &self.0);
 
@@ -85,7 +87,7 @@ impl PrivateKey for SM2PrivateKey {
 
     fn to_bytes(&self) -> Bytes {
         let vec_bytes = SM2_CONTEXT.serialize_seckey(&self.0);
-        assert_eq!(vec_bytes.len(), 32);
+        assert_eq!(vec_bytes.len(), Self::LENGTH);
 
         vec_bytes.into()
     }
@@ -110,10 +112,12 @@ impl TryFrom<&[u8]> for SM2PublicKey {
 impl PublicKey for SM2PublicKey {
     type Signature = SM2Signature;
 
+    const LENGTH: usize = 33;
+
     fn to_bytes(&self) -> Bytes {
         let vec_bytes = SM2_CONTEXT.serialize_pubkey(&self.0, true);
         // true for compressed public key
-        assert_eq!(vec_bytes.len(), 33);
+        assert_eq!(vec_bytes.len(), Self::LENGTH);
 
         vec_bytes.into()
     }

@@ -9,6 +9,7 @@ use ophelia_derive::SecretDebug;
 use rand::{CryptoRng, Rng};
 
 use curve25519_dalek::scalar::Scalar;
+use ed25519_dalek::{PUBLIC_KEY_LENGTH, SECRET_KEY_LENGTH};
 use failure::Fail;
 
 use std::convert::TryFrom;
@@ -79,6 +80,8 @@ impl Clone for Ed25519PrivateKey {
 impl PrivateKey for Ed25519PrivateKey {
     type PublicKey = Ed25519PublicKey;
     type Signature = Ed25519Signature;
+
+    const LENGTH: usize = SECRET_KEY_LENGTH;
 
     fn sign_message(&self, msg: &HashValue) -> Self::Signature {
         let expanded_secret_key = ed25519_dalek::ExpandedSecretKey::from(&self.0);
@@ -152,6 +155,8 @@ impl TryFrom<&[u8]> for Ed25519PublicKey {
 
 impl PublicKey for Ed25519PublicKey {
     type Signature = Ed25519Signature;
+
+    const LENGTH: usize = PUBLIC_KEY_LENGTH;
 
     fn to_bytes(&self) -> Bytes {
         self.0.as_bytes().as_ref().into()

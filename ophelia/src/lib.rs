@@ -21,6 +21,8 @@ pub trait PrivateKey: for<'a> TryFrom<&'a [u8], Error = CryptoError> + Clone {
     type PublicKey;
     type Signature;
 
+    const LENGTH: usize;
+
     fn sign_message(&self, msg: &HashValue) -> Self::Signature;
 
     fn pub_key(&self) -> Self::PublicKey;
@@ -30,6 +32,8 @@ pub trait PrivateKey: for<'a> TryFrom<&'a [u8], Error = CryptoError> + Clone {
 
 pub trait PublicKey: for<'a> TryFrom<&'a [u8], Error = CryptoError> + Clone {
     type Signature;
+
+    const LENGTH: usize;
 
     fn to_bytes(&self) -> Bytes;
 }

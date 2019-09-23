@@ -18,6 +18,8 @@ pub trait PrivateKeySet: for<'a> TryFrom<&'a [u8], Error = CryptoError> + Clone 
     type PublicKeySet;
     type PrivateKeyShare;
 
+    const LENGTH: usize;
+
     fn public_key_set(&self) -> Self::PublicKeySet;
 
     fn private_key_share(&self, i: usize) -> Self::PrivateKeyShare;
@@ -30,6 +32,8 @@ pub trait PublicKeySet: for<'a> TryFrom<&'a [u8], Error = CryptoError> + Clone {
     type PublicKeyShare;
     type SignatureShare;
     type CombinedSignature;
+
+    const LENGTH: usize;
 
     fn master_public_key(&self) -> Self::MasterPublicKey;
 

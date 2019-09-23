@@ -7,7 +7,10 @@ use ophelia_derive::SecretDebug;
 use rand::{CryptoRng, Rng};
 
 use lazy_static::lazy_static;
-use secp256k1::{All, Message, ThirtyTwoByteHash};
+use secp256k1::{
+    constants::{PUBLIC_KEY_SIZE, SECRET_KEY_SIZE},
+    All, Message, ThirtyTwoByteHash,
+};
 
 use std::convert::TryFrom;
 
@@ -80,6 +83,8 @@ impl PrivateKey for Secp256k1PrivateKey {
     type PublicKey = Secp256k1PublicKey;
     type Signature = Secp256k1Signature;
 
+    const LENGTH: usize = SECRET_KEY_SIZE;
+
     fn sign_message(&self, msg: &HashValue) -> Self::Signature {
         let msg = Message::from(HashedMessage(msg));
         let sig = ENGINE.sign(&msg, &self.0);
@@ -94,7 +99,7 @@ impl PrivateKey for Secp256k1PrivateKey {
     }
 
     fn to_bytes(&self) -> Bytes {
-        let mut bytes = Bytes::with_capacity(32);
+        let mut bytes = Bytes::with_capacity(Self::LENGTH);
         bytes.extend_from_slice(&self.0[..]);
 
         bytes
@@ -117,6 +122,8 @@ impl TryFrom<&[u8]> for Secp256k1PublicKey {
 
 impl PublicKey for Secp256k1PublicKey {
     type Signature = Secp256k1Signature;
+
+    const LENGTH: usize = PUBLIC_KEY_SIZE;
 
     fn to_bytes(&self) -> Bytes {
         self.0.serialize().as_ref().into()
