@@ -3,6 +3,7 @@ name = "ophelia-hasher-sm3"
 version = "0.1.0"
 authors = ["zero.qn <zero.qn@outlook.com>"]
 edition = "2018"
+description = "ophelia sm3 hasher"
 
 [dependencies]
 ophelia-hasher = { path = "../ophelia-hasher", version = "0.1" }
