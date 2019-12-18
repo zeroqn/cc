@@ -201,7 +201,7 @@ impl PublicKeySet for BLS12381PublicKeySet {
 
     fn to_bytes(&self) -> Bytes {
         let ser_key = bincode::serialize(&self.0).expect("Should serialize public key set");
-        assert_eq!(ser_key.len(), 104);
+        debug_assert_eq!(ser_key.len(), 104);
 
         ser_key.into()
     }
