@@ -433,6 +433,7 @@ mod tests {
         }
     }
 
+    #[ignore]
     #[quickcheck]
     fn prop_malleable_signature_should_not_pass(msg: HashValue, priv_key: Ed25519PrivateKey) {
         let pub_key = priv_key.pub_key();
