@@ -1,5 +1,4 @@
 pub mod error;
-pub mod threshold;
 pub use error::{CryptoError, CryptoKind};
 
 pub use bytes::Bytes;
