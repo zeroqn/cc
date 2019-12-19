@@ -21,16 +21,6 @@ version = "0.8"
 optional = true
 default-features = false
 
-[dependencies.ophelia-quickcheck-types]
-path = "../ophelia-quickcheck-types"
-version = "0.1"
-optional = true
-default-features = false
-
 [dev-dependencies]
 quickcheck = "0.8"
 quickcheck_macros = "0.8"
-
-[features]
-default = []
-proptest = [ "quickcheck", "ophelia-quickcheck-types", "ophelia-hasher/proptest" ]

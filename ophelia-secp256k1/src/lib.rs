@@ -174,13 +174,14 @@ impl<'a> ThirtyTwoByteHash for HashedMessage<'a> {
 mod tests {
     use super::{Secp256k1PrivateKey, Secp256k1PublicKey, Secp256k1Signature};
 
-    use ophelia::{impl_quickcheck_arbitrary, HashValue, PrivateKey, PublicKey, Signature};
+    use ophelia::{HashValue, PrivateKey, PublicKey, Signature};
+    use ophelia_quickcheck::impl_quickcheck_for_privatekey;
 
     use quickcheck_macros::quickcheck;
 
     use std::convert::TryFrom;
 
-    impl_quickcheck_arbitrary!(Secp256k1PrivateKey);
+    impl_quickcheck_for_privatekey!(Secp256k1PrivateKey);
 
     #[quickcheck]
     fn prop_private_key_bytes_serialization(priv_key: Secp256k1PrivateKey) -> bool {

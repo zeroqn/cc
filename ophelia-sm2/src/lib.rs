@@ -145,13 +145,14 @@ impl Signature for SM2Signature {
 mod tests {
     use super::{SM2PrivateKey, SM2PublicKey, SM2Signature};
 
-    use ophelia::{impl_quickcheck_arbitrary, HashValue, PrivateKey, PublicKey, Signature};
+    use ophelia::{HashValue, PrivateKey, PublicKey, Signature};
+    use ophelia_quickcheck::impl_quickcheck_for_privatekey;
 
     use quickcheck_macros::quickcheck;
 
     use std::convert::TryFrom;
 
-    impl_quickcheck_arbitrary!(SM2PrivateKey);
+    impl_quickcheck_for_privatekey!(SM2PrivateKey);
 
     #[quickcheck]
     fn prop_private_key_bytes_serialization(priv_key: SM2PrivateKey) -> bool {

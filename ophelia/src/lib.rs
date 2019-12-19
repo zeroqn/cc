@@ -62,20 +62,3 @@ pub trait Crypto {
         Ok(())
     }
 }
-
-#[cfg(feature = "proptest")]
-pub use ophelia_quickcheck_types::Octet32;
-
-#[cfg(feature = "proptest")]
-#[macro_export]
-macro_rules! impl_quickcheck_arbitrary {
-    ($priv_key:ident) => {
-        impl quickcheck::Arbitrary for $priv_key {
-            fn arbitrary<G: quickcheck::Gen>(g: &mut G) -> $priv_key {
-                let octet32 = ophelia::Octet32::arbitrary(g);
-
-                $priv_key::try_from(octet32.as_ref()).unwrap()
-            }
-        }
-    };
-}

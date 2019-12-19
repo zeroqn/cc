@@ -17,9 +17,7 @@ rand = "0.6"
 failure = "0.1.5"
 
 [dev-dependencies]
-# FIXME: compiler crash if we add "generate"
-ophelia = { path = "../ophelia", version = "0.1", features = [ "proptest" ] }
-
 rand = "0.6"
 quickcheck = "0.8"
 quickcheck_macros = "0.8"
+ophelia-quickcheck = { path = "../ophelia-quickcheck" }

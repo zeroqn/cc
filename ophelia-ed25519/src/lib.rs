@@ -246,9 +246,8 @@ impl From<Ed25519Error> for CryptoError {
 mod tests {
     use super::{Ed25519Error, Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature};
 
-    use ophelia::{
-        impl_quickcheck_arbitrary, CryptoError, HashValue, PrivateKey, PublicKey, Signature,
-    };
+    use ophelia::{CryptoError, HashValue, PrivateKey, PublicKey, Signature};
+    use ophelia_quickcheck::impl_quickcheck_for_privatekey;
 
     use curve25519_dalek::scalar::Scalar;
     use quickcheck_macros::quickcheck;
@@ -411,7 +410,7 @@ mod tests {
         ],
     ];
 
-    impl_quickcheck_arbitrary!(Ed25519PrivateKey);
+    impl_quickcheck_for_privatekey!(Ed25519PrivateKey);
 
     impl Ed25519Signature {
         fn from_bytes_unchecked(bytes: &[u8]) -> Result<Ed25519Signature, CryptoError> {

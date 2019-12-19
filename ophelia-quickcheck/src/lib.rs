@@ -21,3 +21,16 @@ impl Arbitrary for Octet32 {
         Octet32(octet32)
     }
 }
+
+#[macro_export]
+macro_rules! impl_quickcheck_for_privatekey {
+    ($priv_key:ident) => {
+        impl quickcheck::Arbitrary for $priv_key {
+            fn arbitrary<G: quickcheck::Gen>(g: &mut G) -> $priv_key {
+                let octet32 = ophelia_quickcheck::Octet32::arbitrary(g);
+
+                $priv_key::try_from(octet32.as_ref()).unwrap()
+            }
+        }
+    };
+}
