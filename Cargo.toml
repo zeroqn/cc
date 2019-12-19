@@ -7,7 +7,6 @@ members = [
   "ophelia-quickcheck-types",
   "ophelia-derive",
   "ophelia-sm2",
-  "ophelia-bls12381",
   "ophelia-hasher",
   "ophelia-hasher-keccak256",
   "ophelia-hasher-blake2b",
