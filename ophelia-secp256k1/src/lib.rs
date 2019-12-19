@@ -3,9 +3,6 @@ use ophelia::{
 };
 use ophelia_derive::SecretDebug;
 
-#[cfg(any(test, feature = "generate"))]
-use rand::{CryptoRng, Rng};
-
 use lazy_static::lazy_static;
 use secp256k1::{
     constants::{PUBLIC_KEY_SIZE, SECRET_KEY_SIZE},
@@ -35,34 +32,9 @@ pub struct HashedMessage<'a>(&'a HashValue);
 pub struct Secp256k1;
 
 impl Crypto for Secp256k1 {
-    #[cfg(feature = "generate")]
-    type KeyGenerator = Secp256k1PrivateKey;
     type PrivateKey = Secp256k1PrivateKey;
     type PublicKey = Secp256k1PublicKey;
     type Signature = Secp256k1Signature;
-}
-
-#[cfg(any(test, feature = "generate"))]
-pub fn generate_keypair<R: CryptoRng + Rng + ?Sized>(
-    rng: &mut R,
-) -> (Secp256k1PrivateKey, Secp256k1PublicKey) {
-    let (secret_key, public_key) = ENGINE.generate_keypair(rng);
-
-    (
-        Secp256k1PrivateKey(secret_key),
-        Secp256k1PublicKey(public_key),
-    )
-}
-
-#[cfg(feature = "generate")]
-impl ophelia::KeyGenerator for Secp256k1PrivateKey {
-    type Output = Secp256k1PrivateKey;
-
-    fn generate<R: CryptoRng + Rng + ?Sized>(rng: &mut R) -> Self::Output {
-        let (priv_key, _) = generate_keypair(rng);
-
-        priv_key
-    }
 }
 
 //
@@ -200,32 +172,15 @@ impl<'a> ThirtyTwoByteHash for HashedMessage<'a> {
 
 #[cfg(test)]
 mod tests {
-    use super::{generate_keypair, Secp256k1PrivateKey, Secp256k1PublicKey, Secp256k1Signature};
+    use super::{Secp256k1PrivateKey, Secp256k1PublicKey, Secp256k1Signature};
 
     use ophelia::{impl_quickcheck_arbitrary, HashValue, PrivateKey, PublicKey, Signature};
 
     use quickcheck_macros::quickcheck;
-    use rand::rngs::OsRng;
-    use sha2::{Digest, Sha256};
 
     use std::convert::TryFrom;
 
     impl_quickcheck_arbitrary!(Secp256k1PrivateKey);
-
-    #[test]
-    fn should_generate_workable_keypair_from_crypto_rng() {
-        let mut rng = OsRng::new().expect("OsRng");
-        let (priv_key, pub_key) = generate_keypair(&mut rng);
-
-        let msg = {
-            let mut hasher = Sha256::new();
-            hasher.input(b"you can(not) redo");
-            HashValue::try_from(&hasher.result()[..32]).expect("msg")
-        };
-
-        let sig = priv_key.sign_message(&msg);
-        assert!(sig.verify(&msg, &pub_key).is_ok());
-    }
 
     #[quickcheck]
     fn prop_private_key_bytes_serialization(priv_key: Secp256k1PrivateKey) -> bool {

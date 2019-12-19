@@ -5,17 +5,7 @@ pub use error::{CryptoError, CryptoKind};
 pub use bytes::Bytes;
 pub use ophelia_hasher::{HashValue, Hasher};
 
-#[cfg(feature = "generate")]
-use rand::{CryptoRng, Rng};
-
 use std::convert::TryFrom;
-
-#[cfg(feature = "generate")]
-pub trait KeyGenerator {
-    type Output;
-
-    fn generate<R: CryptoRng + Rng + ?Sized>(rng: &mut R) -> Self::Output;
-}
 
 pub trait PrivateKey: for<'a> TryFrom<&'a [u8], Error = CryptoError> + Clone {
     type PublicKey;
@@ -38,7 +28,6 @@ pub trait PublicKey: for<'a> TryFrom<&'a [u8], Error = CryptoError> + Clone {
     fn to_bytes(&self) -> Bytes;
 }
 
-// TODO: move verify to PublicKey trait
 pub trait Signature: for<'a> TryFrom<&'a [u8], Error = CryptoError> + Clone {
     type PublicKey;
 
@@ -48,21 +37,9 @@ pub trait Signature: for<'a> TryFrom<&'a [u8], Error = CryptoError> + Clone {
 }
 
 pub trait Crypto {
-    #[cfg(feature = "generate")]
-    type KeyGenerator: KeyGenerator<Output = Self::PrivateKey>;
     type PrivateKey: PrivateKey<PublicKey = Self::PublicKey, Signature = Self::Signature>;
     type PublicKey: PublicKey<Signature = Self::Signature>;
     type Signature: Signature<PublicKey = Self::PublicKey>;
-
-    #[cfg(feature = "generate")]
-    fn generate_keypair<R: CryptoRng + Rng + ?Sized>(
-        mut rng: &mut R,
-    ) -> (Self::PrivateKey, Self::PublicKey) {
-        let priv_key = Self::KeyGenerator::generate(&mut rng);
-        let pub_key = priv_key.pub_key();
-
-        (priv_key, pub_key)
-    }
 
     fn pub_key(priv_key: &[u8]) -> Result<Self::PublicKey, CryptoError> {
         let priv_key = Self::PrivateKey::try_from(priv_key)?;

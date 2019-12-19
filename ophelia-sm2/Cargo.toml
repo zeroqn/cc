@@ -20,7 +20,3 @@ ophelia = { path = "../ophelia", version = "0.1", features = [ "proptest" ] }
 sha2 = "0.8"
 quickcheck = "0.8"
 quickcheck_macros = "0.8"
-
-[features]
-default = []
-generate = [ "ophelia/generate", "rand" ]
