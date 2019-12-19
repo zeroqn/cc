@@ -3,9 +3,6 @@ use ophelia::{
 };
 use ophelia_derive::SecretDebug;
 
-#[cfg(feature = "generate")]
-use rand::{CryptoRng, Rng};
-
 use lazy_static::lazy_static;
 use libsm::sm2::signature::{self as sm2, SigCtx};
 
@@ -26,29 +23,9 @@ pub struct SM2Signature(sm2::Signature);
 pub struct Sm2;
 
 impl Crypto for Sm2 {
-    #[cfg(feature = "generate")]
-    type KeyGenerator = SM2PrivateKey;
     type PrivateKey = SM2PrivateKey;
     type PublicKey = SM2PublicKey;
     type Signature = SM2Signature;
-}
-
-#[cfg(any(test, feature = "generate"))]
-pub fn generate_keypair() -> (SM2PrivateKey, SM2PublicKey) {
-    let (public_key, secret_key) = SM2_CONTEXT.new_keypair();
-
-    (SM2PrivateKey(secret_key), SM2PublicKey(public_key))
-}
-
-#[cfg(feature = "generate")]
-impl ophelia::KeyGenerator for SM2PrivateKey {
-    type Output = SM2PrivateKey;
-
-    fn generate<R: CryptoRng + Rng + ?Sized>(_rng: &mut R) -> Self::Output {
-        let (priv_key, _) = generate_keypair();
-
-        priv_key
-    }
 }
 
 //
@@ -166,30 +143,15 @@ impl Signature for SM2Signature {
 
 #[cfg(test)]
 mod tests {
-    use super::{generate_keypair, SM2PrivateKey, SM2PublicKey, SM2Signature};
+    use super::{SM2PrivateKey, SM2PublicKey, SM2Signature};
 
     use ophelia::{impl_quickcheck_arbitrary, HashValue, PrivateKey, PublicKey, Signature};
 
     use quickcheck_macros::quickcheck;
-    use sha2::{Digest, Sha256};
 
     use std::convert::TryFrom;
 
     impl_quickcheck_arbitrary!(SM2PrivateKey);
-
-    #[test]
-    fn should_generate_workable_keypair() {
-        let (priv_key, pub_key) = generate_keypair();
-
-        let msg = {
-            let mut hasher = Sha256::new();
-            hasher.input(b"you can(not) redo");
-            HashValue::try_from(&hasher.result()[..32]).expect("msg")
-        };
-
-        let sig = priv_key.sign_message(&msg);
-        assert!(sig.verify(&msg, &pub_key).is_ok());
-    }
 
     #[quickcheck]
     fn prop_private_key_bytes_serialization(priv_key: SM2PrivateKey) -> bool {
