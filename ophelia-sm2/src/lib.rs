@@ -1,4 +1,5 @@
-use ophelia::{Bytes, Crypto, Error, HashValue, PrivateKey, PublicKey, Signature};
+use ophelia::{Bytes, Error};
+use ophelia::{Crypto, HashValue, PrivateKey, PublicKey, Signature, SignatureVerify, ToPublicKey};
 use ophelia::{CryptoRng, RngCore};
 use ophelia_derive::SecretDebug;
 
@@ -12,13 +13,13 @@ lazy_static! {
 }
 
 #[derive(thiserror::Error, Debug)]
-enum InternalError {
+enum SM2ErrorKind {
     #[error("invalid public key")]
-    InvalidPublicKey,
+    PublicKey,
     #[error("invalid private key")]
-    InvalidPrivateKey,
+    PrivateKey,
     #[error("invalid signature")]
-    InvalidSignature,
+    Signature,
 }
 
 pub struct Sm2;
@@ -38,14 +39,13 @@ impl TryFrom<&[u8]> for SM2PrivateKey {
     fn try_from(bytes: &[u8]) -> Result<SM2PrivateKey, Self::Error> {
         let secret_key = SM2_CONTEXT
             .load_seckey(bytes)
-            .map_err(|_| InternalError::InvalidPrivateKey)?;
+            .map_err(|_| SM2ErrorKind::PrivateKey)?;
 
         Ok(SM2PrivateKey(secret_key))
     }
 }
 
 impl PrivateKey for SM2PrivateKey {
-    type PublicKey = SM2PublicKey;
     type Signature = SM2Signature;
 
     const LENGTH: usize = 32;
@@ -62,17 +62,21 @@ impl PrivateKey for SM2PrivateKey {
         SM2Signature(sig)
     }
 
-    fn pub_key(&self) -> Self::PublicKey {
-        let pub_key = SM2_CONTEXT.pk_from_sk(&self.0);
-
-        SM2PublicKey(pub_key)
-    }
-
     fn to_bytes(&self) -> Bytes {
         let vec_bytes = SM2_CONTEXT.serialize_seckey(&self.0);
         assert_eq!(vec_bytes.len(), Self::LENGTH);
 
         vec_bytes.into()
+    }
+}
+
+impl ToPublicKey for SM2PrivateKey {
+    type PublicKey = SM2PublicKey;
+
+    fn pub_key(&self) -> Self::PublicKey {
+        let pub_key = SM2_CONTEXT.pk_from_sk(&self.0);
+
+        SM2PublicKey(pub_key)
     }
 }
 
@@ -85,7 +89,7 @@ impl TryFrom<&[u8]> for SM2PublicKey {
     fn try_from(bytes: &[u8]) -> Result<SM2PublicKey, Self::Error> {
         let pub_key = SM2_CONTEXT
             .load_pubkey(bytes)
-            .map_err(|_| InternalError::InvalidPublicKey)?;
+            .map_err(|_| SM2ErrorKind::PublicKey)?;
 
         Ok(SM2PublicKey(pub_key))
     }
@@ -111,7 +115,7 @@ impl TryFrom<&[u8]> for SM2Signature {
     type Error = Error;
 
     fn try_from(bytes: &[u8]) -> Result<SM2Signature, Self::Error> {
-        let sig = sm2::Signature::der_decode(bytes).map_err(|_| InternalError::InvalidSignature)?;
+        let sig = sm2::Signature::der_decode(bytes).map_err(|_| SM2ErrorKind::Signature)?;
 
         Ok(SM2Signature(sig))
     }
@@ -129,18 +133,20 @@ impl Clone for SM2Signature {
 }
 
 impl Signature for SM2Signature {
+    fn to_bytes(&self) -> Bytes {
+        self.0.der_encode().into()
+    }
+}
+
+impl SignatureVerify for SM2Signature {
     type PublicKey = SM2PublicKey;
 
     fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), Error> {
         if !SM2_CONTEXT.verify_raw(msg.as_ref(), &pub_key.0, &self.0) {
-            return Err(InternalError::InvalidSignature)?;
+            Err(SM2ErrorKind::Signature.into())
+        } else {
+            Ok(())
         }
-
-        Ok(())
-    }
-
-    fn to_bytes(&self) -> Bytes {
-        self.0.der_encode().into()
     }
 }
 
@@ -148,7 +154,7 @@ impl Signature for SM2Signature {
 mod tests {
     use super::{SM2PrivateKey, SM2PublicKey, SM2Signature};
 
-    use ophelia::{PrivateKey, PublicKey, Signature};
+    use ophelia::{PrivateKey, PublicKey, Signature, SignatureVerify, ToPublicKey};
     use ophelia_quickcheck::{impl_quickcheck_for_privatekey, AHashValue};
     use quickcheck_macros::quickcheck;
     use rand::rngs::OsRng;

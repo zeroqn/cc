@@ -1,4 +1,5 @@
-use ophelia::{Bytes, BytesMut, Crypto, Error, HashValue, PrivateKey, PublicKey, Signature};
+use ophelia::{Bytes, BytesMut, Error};
+use ophelia::{Crypto, HashValue, PrivateKey, PublicKey, Signature, SignatureVerify, ToPublicKey};
 use ophelia::{CryptoRng, RngCore};
 use ophelia_derive::SecretDebug;
 
@@ -36,7 +37,6 @@ impl TryFrom<&[u8]> for Secp256k1PrivateKey {
 }
 
 impl PrivateKey for Secp256k1PrivateKey {
-    type PublicKey = Secp256k1PublicKey;
     type Signature = Secp256k1Signature;
 
     const LENGTH: usize = SECRET_KEY_SIZE;
@@ -57,14 +57,18 @@ impl PrivateKey for Secp256k1PrivateKey {
         Secp256k1Signature(sig)
     }
 
+    fn to_bytes(&self) -> Bytes {
+        BytesMut::from(&self.0[..]).freeze()
+    }
+}
+
+impl ToPublicKey for Secp256k1PrivateKey {
+    type PublicKey = Secp256k1PublicKey;
+
     fn pub_key(&self) -> Self::PublicKey {
         let pub_key = secp256k1::PublicKey::from_secret_key(&ENGINE, &self.0);
 
         Secp256k1PublicKey(pub_key)
-    }
-
-    fn to_bytes(&self) -> Bytes {
-        BytesMut::from(&self.0[..]).freeze()
     }
 }
 
@@ -105,16 +109,18 @@ impl TryFrom<&[u8]> for Secp256k1Signature {
 }
 
 impl Signature for Secp256k1Signature {
+    fn to_bytes(&self) -> Bytes {
+        BytesMut::from(self.0.serialize_compact().as_ref()).freeze()
+    }
+}
+
+impl SignatureVerify for Secp256k1Signature {
     type PublicKey = Secp256k1PublicKey;
 
     fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), Error> {
         let msg = Message::from(HashedMessage(msg));
 
         Ok(ENGINE.verify(&msg, &self.0, &pub_key.0)?)
-    }
-
-    fn to_bytes(&self) -> Bytes {
-        BytesMut::from(self.0.serialize_compact().as_ref()).freeze()
     }
 }
 
@@ -136,7 +142,7 @@ impl<'a> ThirtyTwoByteHash for HashedMessage<'a> {
 mod tests {
     use super::{Secp256k1PrivateKey, Secp256k1PublicKey, Secp256k1Signature};
 
-    use ophelia::{PrivateKey, PublicKey, Signature};
+    use ophelia::{PrivateKey, PublicKey, Signature, SignatureVerify, ToPublicKey};
     use ophelia_quickcheck::{impl_quickcheck_for_privatekey, AHashValue};
     use quickcheck_macros::quickcheck;
     use rand::rngs::OsRng;

@@ -6,7 +6,6 @@ pub use rand_core::{CryptoRng, RngCore};
 use std::convert::TryFrom;
 
 pub trait PrivateKey: for<'a> TryFrom<&'a [u8], Error = Error> + Clone {
-    type PublicKey;
     type Signature;
 
     const LENGTH: usize;
@@ -15,9 +14,20 @@ pub trait PrivateKey: for<'a> TryFrom<&'a [u8], Error = Error> + Clone {
 
     fn sign_message(&self, msg: &HashValue) -> Self::Signature;
 
-    fn pub_key(&self) -> Self::PublicKey;
-
     fn to_bytes(&self) -> Bytes;
+}
+
+pub trait ToPublicKey {
+    type PublicKey;
+
+    fn pub_key(&self) -> Self::PublicKey;
+}
+
+pub trait ToBlsPublicKey {
+    type PublicKey;
+    type CommonReference;
+
+    fn pub_key(&self, cr: &Self::CommonReference) -> Self::PublicKey;
 }
 
 pub trait PublicKey: for<'a> TryFrom<&'a [u8], Error = Error> + Clone {
@@ -29,17 +39,32 @@ pub trait PublicKey: for<'a> TryFrom<&'a [u8], Error = Error> + Clone {
 }
 
 pub trait Signature: for<'a> TryFrom<&'a [u8], Error = Error> + Clone {
-    type PublicKey;
-
-    fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), Error>;
-
     fn to_bytes(&self) -> Bytes;
 }
 
+pub trait SignatureVerify {
+    type PublicKey;
+
+    fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), Error>;
+}
+
+pub trait BlsSignatureVerify {
+    type PublicKey;
+    type CommonReference;
+
+    fn verify(
+        &self,
+        msg: &HashValue,
+        pub_key: &Self::PublicKey,
+        cr: &Self::CommonReference,
+    ) -> Result<(), Error>;
+}
+
 pub trait Crypto {
-    type PrivateKey: PrivateKey<PublicKey = Self::PublicKey, Signature = Self::Signature>;
+    type PrivateKey: PrivateKey<Signature = Self::Signature>
+        + ToPublicKey<PublicKey = Self::PublicKey>;
     type PublicKey: PublicKey<Signature = Self::Signature>;
-    type Signature: Signature<PublicKey = Self::PublicKey>;
+    type Signature: Signature + SignatureVerify<PublicKey = Self::PublicKey>;
 
     fn pub_key(priv_key: &[u8]) -> Result<Self::PublicKey, Error> {
         let priv_key = Self::PrivateKey::try_from(priv_key)?;
