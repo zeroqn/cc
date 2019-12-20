@@ -20,14 +20,6 @@ enum InternalError {
     InvalidSignature,
 }
 
-#[derive(SecretDebug, PartialEq, Clone)]
-pub struct SM2PrivateKey(sm2::Seckey);
-
-#[derive(Clone)]
-pub struct SM2PublicKey(sm2::Pubkey);
-
-pub struct SM2Signature(sm2::Signature);
-
 pub struct Sm2;
 
 impl Crypto for Sm2 {
@@ -36,9 +28,8 @@ impl Crypto for Sm2 {
     type Signature = SM2Signature;
 }
 
-//
-// PrivateKey Impl
-//
+#[derive(SecretDebug, PartialEq, Clone)]
+pub struct SM2PrivateKey(sm2::Seckey);
 
 impl TryFrom<&[u8]> for SM2PrivateKey {
     type Error = Error;
@@ -78,9 +69,8 @@ impl PrivateKey for SM2PrivateKey {
     }
 }
 
-//
-// PublicKey Impl
-//
+#[derive(Clone)]
+pub struct SM2PublicKey(sm2::Pubkey);
 
 impl TryFrom<&[u8]> for SM2PublicKey {
     type Error = Error;
@@ -108,9 +98,7 @@ impl PublicKey for SM2PublicKey {
     }
 }
 
-//
-// Signature Impl
-//
+pub struct SM2Signature(sm2::Signature);
 
 impl TryFrom<&[u8]> for SM2Signature {
     type Error = Error;

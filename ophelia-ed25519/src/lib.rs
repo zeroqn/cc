@@ -18,15 +18,6 @@ enum InternalError {
     NonCanonicalScalar,
 }
 
-#[derive(SecretDebug)]
-pub struct Ed25519PrivateKey(ed25519_dalek::SecretKey);
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct Ed25519PublicKey(ed25519_dalek::PublicKey);
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct Ed25519Signature(ed25519_dalek::Signature);
-
 pub struct Ed25519;
 
 impl Crypto for Ed25519 {
@@ -35,9 +26,8 @@ impl Crypto for Ed25519 {
     type Signature = Ed25519Signature;
 }
 
-//
-// PrivateKey Impl
-//
+#[derive(SecretDebug)]
+pub struct Ed25519PrivateKey(ed25519_dalek::SecretKey);
 
 impl TryFrom<&[u8]> for Ed25519PrivateKey {
     type Error = Error;
@@ -81,9 +71,8 @@ impl PrivateKey for Ed25519PrivateKey {
     }
 }
 
-//
-// PublicKey Impl
-//
+#[derive(Debug, PartialEq, Clone)]
+pub struct Ed25519PublicKey(ed25519_dalek::PublicKey);
 
 impl Ed25519PublicKey {
     pub fn raw(&self) -> &ed25519_dalek::PublicKey {
@@ -133,9 +122,8 @@ impl PublicKey for Ed25519PublicKey {
     }
 }
 
-//
-// Signature Impl
-//
+#[derive(Debug, PartialEq, Clone)]
+pub struct Ed25519Signature(ed25519_dalek::Signature);
 
 impl Ed25519Signature {
     pub fn is_valid(&self) -> Result<(), Error> {

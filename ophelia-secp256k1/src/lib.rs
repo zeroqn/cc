@@ -13,20 +13,6 @@ lazy_static! {
     static ref ENGINE: secp256k1::Secp256k1<All> = secp256k1::Secp256k1::new();
 }
 
-#[derive(SecretDebug, PartialEq, Clone)]
-pub struct Secp256k1PrivateKey(secp256k1::SecretKey);
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct Secp256k1PublicKey(secp256k1::PublicKey);
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct Secp256k1Signature(secp256k1::Signature);
-
-#[derive(Debug, PartialEq)]
-pub struct Secp256k1Error(secp256k1::Error);
-
-pub struct HashedMessage<'a>(&'a HashValue);
-
 pub struct Secp256k1;
 
 impl Crypto for Secp256k1 {
@@ -35,9 +21,8 @@ impl Crypto for Secp256k1 {
     type Signature = Secp256k1Signature;
 }
 
-//
-// PrivateKey Impl
-//
+#[derive(SecretDebug, PartialEq, Clone)]
+pub struct Secp256k1PrivateKey(secp256k1::SecretKey);
 
 impl TryFrom<&[u8]> for Secp256k1PrivateKey {
     type Error = Error;
@@ -76,9 +61,8 @@ impl PrivateKey for Secp256k1PrivateKey {
     }
 }
 
-//
-// PublicKey Impl
-//
+#[derive(Debug, PartialEq, Clone)]
+pub struct Secp256k1PublicKey(secp256k1::PublicKey);
 
 impl TryFrom<&[u8]> for Secp256k1PublicKey {
     type Error = Error;
@@ -100,9 +84,8 @@ impl PublicKey for Secp256k1PublicKey {
     }
 }
 
-//
-// Signature Impl
-//
+#[derive(Debug, PartialEq, Clone)]
+pub struct Secp256k1Signature(secp256k1::Signature);
 
 impl TryFrom<&[u8]> for Secp256k1Signature {
     type Error = Error;
@@ -128,9 +111,7 @@ impl Signature for Secp256k1Signature {
     }
 }
 
-//
-// HashedMessage Impl
-//
+pub struct HashedMessage<'a>(&'a HashValue);
 
 impl<'a> HashedMessage<'a> {
     pub fn to_bytes(&self) -> [u8; 32] {
