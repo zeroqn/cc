@@ -1,6 +1,6 @@
 [package]
 name = "ophelia"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["zero.qn <zero.qn@outlook.com>"]
 edition = "2018"
 license = "MIT"
@@ -9,5 +9,5 @@ description = "ophelia crypto collection"
 [dependencies]
 anyhow = "1.0"
 bytes = "0.5"
-ophelia-hasher = { path = "../ophelia-hasher", version = "0.1" }
+ophelia-hasher = { path = "../ophelia-hasher", version = "0.2" }
 rand_core = "0.5"
