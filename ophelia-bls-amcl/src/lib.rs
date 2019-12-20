@@ -42,6 +42,7 @@ impl TryFrom<&[u8]> for BlsPrivateKey {
 impl PrivateKey for BlsPrivateKey {
     type Signature = BlsSignature;
 
+    // FIXME
     const LENGTH: usize = 0;
 
     fn generate<R: RngCore + CryptoRng>(rng: &mut R) -> Self {
