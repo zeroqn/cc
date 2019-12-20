@@ -3,6 +3,8 @@ name = "ophelia-bls-amcl"
 version = "0.1.0"
 authors = ["zero.qn <zero.qn@outlook.com>"]
 edition = "2018"
+license = "MIT"
+description = "ophelia bls"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
