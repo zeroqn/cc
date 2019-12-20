@@ -1,4 +1,4 @@
-use ophelia::{Bytes, Crypto, Error, HashValue, PrivateKey, PublicKey, Signature};
+use ophelia::{Bytes, Crypto, Error, HashValue, PrivateKey, PublicKey, Signature, ToPublicKey};
 use ophelia::{CryptoRng, RngCore};
 use ophelia_derive::SecretDebug;
 
@@ -45,7 +45,6 @@ impl TryFrom<&[u8]> for SM2PrivateKey {
 }
 
 impl PrivateKey for SM2PrivateKey {
-    type PublicKey = SM2PublicKey;
     type Signature = SM2Signature;
 
     const LENGTH: usize = 32;
@@ -62,17 +61,21 @@ impl PrivateKey for SM2PrivateKey {
         SM2Signature(sig)
     }
 
-    fn pub_key(&self) -> Self::PublicKey {
-        let pub_key = SM2_CONTEXT.pk_from_sk(&self.0);
-
-        SM2PublicKey(pub_key)
-    }
-
     fn to_bytes(&self) -> Bytes {
         let vec_bytes = SM2_CONTEXT.serialize_seckey(&self.0);
         assert_eq!(vec_bytes.len(), Self::LENGTH);
 
         vec_bytes.into()
+    }
+}
+
+impl ToPublicKey for SM2PrivateKey {
+    type PublicKey = SM2PublicKey;
+
+    fn pub_key(&self) -> Self::PublicKey {
+        let pub_key = SM2_CONTEXT.pk_from_sk(&self.0);
+
+        SM2PublicKey(pub_key)
     }
 }
 
@@ -148,7 +151,7 @@ impl Signature for SM2Signature {
 mod tests {
     use super::{SM2PrivateKey, SM2PublicKey, SM2Signature};
 
-    use ophelia::{PrivateKey, PublicKey, Signature};
+    use ophelia::{PrivateKey, PublicKey, Signature, ToPublicKey};
     use ophelia_quickcheck::{impl_quickcheck_for_privatekey, AHashValue};
     use quickcheck_macros::quickcheck;
     use rand::rngs::OsRng;

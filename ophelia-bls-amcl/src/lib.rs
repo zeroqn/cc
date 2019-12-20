@@ -1,4 +1,4 @@
-use ophelia::{Bytes, Error, HashValue, PrivateKey, PublicKey, Signature};
+use ophelia::{Bytes, Error, HashValue, PrivateKey, PublicKey, Signature, ToBlsPublicKey};
 use ophelia::{CryptoRng, RngCore};
 use ophelia_derive::SecretDebug;
 
@@ -27,12 +27,6 @@ impl<'a> Into<BlsCommonReference> for &'a str {
 #[derive(SecretDebug, PartialEq, Clone)]
 pub struct BlsPrivateKey(SigKey);
 
-impl BlsPrivateKey {
-    pub fn bls_pubkey(&self, cr: &BlsCommonReference) -> BlsPublicKey {
-        BlsPublicKey(VerKey::from_sigkey(&self.0, &cr.0))
-    }
-}
-
 impl TryFrom<&[u8]> for BlsPrivateKey {
     type Error = Error;
 
@@ -45,7 +39,6 @@ impl TryFrom<&[u8]> for BlsPrivateKey {
 }
 
 impl PrivateKey for BlsPrivateKey {
-    type PublicKey = BlsPublicKey;
     type Signature = BlsSignature;
 
     const LENGTH: usize = 0;
@@ -58,16 +51,17 @@ impl PrivateKey for BlsPrivateKey {
         BlsSignature(simple::Signature::new(msg.as_ref(), &self.0))
     }
 
-    // TODO: split out this public key api
-    /// # Panic
-    ///
-    /// Please use bls_pubkey() to generate corresponding public key
-    fn pub_key(&self) -> Self::PublicKey {
-        panic!("please use bls_pubkey");
-    }
-
     fn to_bytes(&self) -> Bytes {
         Bytes::from(self.0.to_bytes())
+    }
+}
+
+impl ToBlsPublicKey for BlsPrivateKey {
+    type PublicKey = BlsPublicKey;
+    type CommonReference = BlsCommonReference;
+
+    fn pub_key(&self, cr: &BlsCommonReference) -> BlsPublicKey {
+        BlsPublicKey(VerKey::from_sigkey(&self.0, &cr.0))
     }
 }
 
@@ -162,7 +156,7 @@ impl Signature for BlsSignature {
 mod tests {
     use super::{BlsPrivateKey, BlsPublicKey, BlsSignature};
 
-    use ophelia::{HashValue, PrivateKey, PublicKey, Signature};
+    use ophelia::{HashValue, PrivateKey, PublicKey, Signature, ToBlsPublicKey};
     use quickcheck::{Arbitrary, Gen};
     use quickcheck_macros::quickcheck;
     use rand::rngs::OsRng;
@@ -182,7 +176,7 @@ mod tests {
         let cr = "fly me to the moon".into();
 
         let priv_key = BlsPrivateKey::generate(&mut OsRng);
-        let pub_key = priv_key.bls_pubkey(&cr);
+        let pub_key = priv_key.pub_key(&cr);
 
         let sig = priv_key.sign_message(&msg);
         assert!(sig.bls_verify(&msg, &pub_key, &cr).is_ok());
@@ -201,7 +195,7 @@ mod tests {
     fn should_able_serialize_and_deserlize_public_key() {
         let priv_key = BlsPrivateKey::generate(&mut OsRng);
         let cr = "fly me to the moon".into();
-        let pub_key = priv_key.bls_pubkey(&cr);
+        let pub_key = priv_key.pub_key(&cr);
 
         let cmp_ret = match BlsPublicKey::try_from(pub_key.to_bytes().as_ref()) {
             Ok(pubkey) => pubkey == pub_key,
@@ -231,15 +225,15 @@ mod tests {
 
         let eva_00 = BlsPrivateKey::generate(&mut OsRng);
         let sig_00 = eva_00.sign_message(&msg);
-        let plug_00 = eva_00.bls_pubkey(&cr);
+        let plug_00 = eva_00.pub_key(&cr);
 
         let eva_01 = BlsPrivateKey::generate(&mut OsRng);
         let sig_01 = eva_01.sign_message(&msg);
-        let plug_01 = eva_01.bls_pubkey(&cr);
+        let plug_01 = eva_01.pub_key(&cr);
 
         let eva_02 = BlsPrivateKey::generate(&mut OsRng);
         let sig_02 = eva_02.sign_message(&msg);
-        let plug_02 = eva_02.bls_pubkey(&cr);
+        let plug_02 = eva_02.pub_key(&cr);
 
         let msig = BlsSignature::combine(vec![
             (sig_00, plug_00.clone()),

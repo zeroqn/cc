@@ -1,6 +1,7 @@
 // TODO: documents
 
-use ophelia::{Bytes, BytesMut, Crypto, Error, HashValue, PrivateKey, PublicKey, Signature};
+use ophelia::{Bytes, BytesMut};
+use ophelia::{Crypto, Error, HashValue, PrivateKey, PublicKey, Signature, ToPublicKey};
 use ophelia::{CryptoRng, RngCore};
 use ophelia_derive::SecretDebug;
 
@@ -47,7 +48,6 @@ impl Clone for Ed25519PrivateKey {
 }
 
 impl PrivateKey for Ed25519PrivateKey {
-    type PublicKey = Ed25519PublicKey;
     type Signature = Ed25519Signature;
 
     const LENGTH: usize = SECRET_KEY_LENGTH;
@@ -70,14 +70,18 @@ impl PrivateKey for Ed25519PrivateKey {
         Ed25519Signature(sig)
     }
 
+    fn to_bytes(&self) -> Bytes {
+        BytesMut::from(self.0.as_bytes().as_ref()).freeze()
+    }
+}
+
+impl ToPublicKey for Ed25519PrivateKey {
+    type PublicKey = Ed25519PublicKey;
+
     fn pub_key(&self) -> Self::PublicKey {
         let pub_key = ed25519_dalek::PublicKey::from(&self.0);
 
         Ed25519PublicKey(pub_key)
-    }
-
-    fn to_bytes(&self) -> Bytes {
-        BytesMut::from(self.0.as_bytes().as_ref()).freeze()
     }
 }
 
@@ -194,7 +198,7 @@ mod tests {
     use super::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature};
 
     use curve25519_dalek::scalar::Scalar;
-    use ophelia::{Error, PrivateKey, PublicKey, Signature};
+    use ophelia::{Error, PrivateKey, PublicKey, Signature, ToPublicKey};
     use ophelia_quickcheck::{impl_quickcheck_for_privatekey, AHashValue};
     use quickcheck_macros::quickcheck;
     use rand::rngs::OsRng;
