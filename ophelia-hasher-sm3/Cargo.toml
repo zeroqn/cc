@@ -1,13 +1,12 @@
 [package]
 name = "ophelia-hasher-sm3"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["zero.qn <zero.qn@outlook.com>"]
 edition = "2018"
 description = "ophelia sm3 hasher"
 
 [dependencies]
-ophelia-hasher = { path = "../ophelia-hasher", version = "0.1" }
-
+ophelia-hasher = { path = "../ophelia-hasher", version = "0.2" }
 libsm = { git = "https://github.com/cryptape/libsm", rev = "ac323abd3512a9fdb8bfd6cd349a6fc46deb688f" }
 
 [dev-dependencies]
