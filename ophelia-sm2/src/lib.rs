@@ -1,4 +1,5 @@
-use ophelia::{Bytes, Crypto, Error, HashValue, PrivateKey, PublicKey, Signature, ToPublicKey};
+use ophelia::{Bytes, Error};
+use ophelia::{Crypto, HashValue, PrivateKey, PublicKey, Signature, SignatureVerify, ToPublicKey};
 use ophelia::{CryptoRng, RngCore};
 use ophelia_derive::SecretDebug;
 
@@ -132,6 +133,12 @@ impl Clone for SM2Signature {
 }
 
 impl Signature for SM2Signature {
+    fn to_bytes(&self) -> Bytes {
+        self.0.der_encode().into()
+    }
+}
+
+impl SignatureVerify for SM2Signature {
     type PublicKey = SM2PublicKey;
 
     fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), Error> {
@@ -141,17 +148,13 @@ impl Signature for SM2Signature {
 
         Ok(())
     }
-
-    fn to_bytes(&self) -> Bytes {
-        self.0.der_encode().into()
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::{SM2PrivateKey, SM2PublicKey, SM2Signature};
 
-    use ophelia::{PrivateKey, PublicKey, Signature, ToPublicKey};
+    use ophelia::{PrivateKey, PublicKey, Signature, SignatureVerify, ToPublicKey};
     use ophelia_quickcheck::{impl_quickcheck_for_privatekey, AHashValue};
     use quickcheck_macros::quickcheck;
     use rand::rngs::OsRng;

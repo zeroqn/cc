@@ -39,18 +39,32 @@ pub trait PublicKey: for<'a> TryFrom<&'a [u8], Error = Error> + Clone {
 }
 
 pub trait Signature: for<'a> TryFrom<&'a [u8], Error = Error> + Clone {
+    fn to_bytes(&self) -> Bytes;
+}
+
+pub trait SignatureVerify {
     type PublicKey;
 
     fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), Error>;
+}
 
-    fn to_bytes(&self) -> Bytes;
+pub trait BlsSignatureVerify {
+    type PublicKey;
+    type CommonReference;
+
+    fn verify(
+        &self,
+        msg: &HashValue,
+        pub_key: &Self::PublicKey,
+        cr: &Self::CommonReference,
+    ) -> Result<(), Error>;
 }
 
 pub trait Crypto {
     type PrivateKey: PrivateKey<Signature = Self::Signature>
         + ToPublicKey<PublicKey = Self::PublicKey>;
     type PublicKey: PublicKey<Signature = Self::Signature>;
-    type Signature: Signature<PublicKey = Self::PublicKey>;
+    type Signature: Signature + SignatureVerify<PublicKey = Self::PublicKey>;
 
     fn pub_key(priv_key: &[u8]) -> Result<Self::PublicKey, Error> {
         let priv_key = Self::PrivateKey::try_from(priv_key)?;

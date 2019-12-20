@@ -1,4 +1,5 @@
-use ophelia::{Bytes, Error, HashValue, PrivateKey, PublicKey, Signature, ToBlsPublicKey};
+use ophelia::{BlsSignatureVerify, HashValue, PrivateKey, PublicKey, Signature, ToBlsPublicKey};
+use ophelia::{Bytes, Error};
 use ophelia::{CryptoRng, RngCore};
 use ophelia_derive::SecretDebug;
 
@@ -102,19 +103,6 @@ impl PublicKey for BlsPublicKey {
 pub struct BlsSignature(simple::Signature);
 
 impl BlsSignature {
-    pub fn bls_verify(
-        &self,
-        msg: &HashValue,
-        pubkey: &BlsPublicKey,
-        cr: &BlsCommonReference,
-    ) -> Result<(), Error> {
-        if !self.0.verify(msg.as_ref(), &pubkey.0, &cr.0) {
-            Err(BlsError::InvalidSignature)?
-        } else {
-            Ok(())
-        }
-    }
-
     pub fn combine(sigs_pubkeys: Vec<(BlsSignature, BlsPublicKey)>) -> Self {
         let sigs_pubkeys = sigs_pubkeys
             .into_iter()
@@ -137,18 +125,26 @@ impl TryFrom<&[u8]> for BlsSignature {
 }
 
 impl Signature for BlsSignature {
-    type PublicKey = BlsPublicKey;
-
-    // FIXME
-    /// # Panic
-    ///
-    /// please use bls_verify() to verify signature
-    fn verify(&self, _: &HashValue, _: &Self::PublicKey) -> Result<(), Error> {
-        panic!("please use bls_verify()")
-    }
-
     fn to_bytes(&self) -> Bytes {
         Bytes::from(self.0.to_bytes())
+    }
+}
+
+impl BlsSignatureVerify for BlsSignature {
+    type PublicKey = BlsPublicKey;
+    type CommonReference = BlsCommonReference;
+
+    fn verify(
+        &self,
+        msg: &HashValue,
+        pubkey: &Self::PublicKey,
+        cr: &Self::CommonReference,
+    ) -> Result<(), Error> {
+        if !self.0.verify(msg.as_ref(), &pubkey.0, &cr.0) {
+            Err(BlsError::InvalidSignature)?
+        } else {
+            Ok(())
+        }
     }
 }
 
@@ -156,7 +152,9 @@ impl Signature for BlsSignature {
 mod tests {
     use super::{BlsPrivateKey, BlsPublicKey, BlsSignature};
 
-    use ophelia::{HashValue, PrivateKey, PublicKey, Signature, ToBlsPublicKey};
+    use ophelia::{
+        BlsSignatureVerify, HashValue, PrivateKey, PublicKey, Signature, ToBlsPublicKey,
+    };
     use quickcheck::{Arbitrary, Gen};
     use quickcheck_macros::quickcheck;
     use rand::rngs::OsRng;
@@ -179,7 +177,7 @@ mod tests {
         let pub_key = priv_key.pub_key(&cr);
 
         let sig = priv_key.sign_message(&msg);
-        assert!(sig.bls_verify(&msg, &pub_key, &cr).is_ok());
+        assert!(sig.verify(&msg, &pub_key, &cr).is_ok());
     }
 
     #[quickcheck]
@@ -242,6 +240,6 @@ mod tests {
         ]);
 
         let akey = BlsPublicKey::aggregate(vec![&plug_00, &plug_01, &plug_02]);
-        assert!(msig.bls_verify(&msg, &akey, &cr).is_ok());
+        assert!(msig.verify(&msg, &akey, &cr).is_ok());
     }
 }
