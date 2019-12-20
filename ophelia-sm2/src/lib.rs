@@ -145,8 +145,8 @@ impl Signature for SM2Signature {
 mod tests {
     use super::{SM2PrivateKey, SM2PublicKey, SM2Signature};
 
-    use ophelia::{HashValue, PrivateKey, PublicKey, Signature};
-    use ophelia_quickcheck::impl_quickcheck_for_privatekey;
+    use ophelia::{PrivateKey, PublicKey, Signature};
+    use ophelia_quickcheck::{impl_quickcheck_for_privatekey, AHashValue};
 
     use quickcheck_macros::quickcheck;
 
@@ -171,14 +171,15 @@ mod tests {
 
     // FIXME: inconsistent signature serialized bytes
     #[quickcheck]
-    fn prop_signature_bytes_serialization(msg: HashValue, priv_key: SM2PrivateKey) -> bool {
-        let sig = priv_key.sign_message(&msg);
+    fn prop_signature_bytes_serialization(msg: AHashValue, priv_key: SM2PrivateKey) -> bool {
+        let sig = priv_key.sign_message(&msg.into_inner());
 
         SM2Signature::try_from(sig.to_bytes().as_ref()).is_ok()
     }
 
     #[quickcheck]
-    fn prop_message_sign_and_verify(msg: HashValue, priv_key: SM2PrivateKey) -> bool {
+    fn prop_message_sign_and_verify(msg: AHashValue, priv_key: SM2PrivateKey) -> bool {
+        let msg = msg.into_inner();
         let pub_key = priv_key.pub_key();
         let sig = priv_key.sign_message(&msg);
 

@@ -174,8 +174,8 @@ impl<'a> ThirtyTwoByteHash for HashedMessage<'a> {
 mod tests {
     use super::{Secp256k1PrivateKey, Secp256k1PublicKey, Secp256k1Signature};
 
-    use ophelia::{HashValue, PrivateKey, PublicKey, Signature};
-    use ophelia_quickcheck::impl_quickcheck_for_privatekey;
+    use ophelia::{PrivateKey, PublicKey, Signature};
+    use ophelia_quickcheck::{impl_quickcheck_for_privatekey, AHashValue};
 
     use quickcheck_macros::quickcheck;
 
@@ -202,8 +202,8 @@ mod tests {
     }
 
     #[quickcheck]
-    fn prop_signature_bytes_serialization(msg: HashValue, priv_key: Secp256k1PrivateKey) -> bool {
-        let sig = priv_key.sign_message(&msg);
+    fn prop_signature_bytes_serialization(msg: AHashValue, priv_key: Secp256k1PrivateKey) -> bool {
+        let sig = priv_key.sign_message(&msg.into_inner());
 
         match Secp256k1Signature::try_from(sig.to_bytes().as_ref()) {
             Ok(s) => s == sig,
@@ -212,7 +212,8 @@ mod tests {
     }
 
     #[quickcheck]
-    fn prop_message_sign_and_verify(msg: HashValue, priv_key: Secp256k1PrivateKey) -> bool {
+    fn prop_message_sign_and_verify(msg: AHashValue, priv_key: Secp256k1PrivateKey) -> bool {
+        let msg = msg.into_inner();
         let pub_key = priv_key.pub_key();
         let sig = priv_key.sign_message(&msg);
 

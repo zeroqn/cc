@@ -56,19 +56,6 @@ impl AsRef<[u8]> for HashValue {
     }
 }
 
-#[cfg(any(test, feature = "proptest"))]
-impl quickcheck::Arbitrary for HashValue {
-    fn arbitrary<G: quickcheck::Gen>(g: &mut G) -> HashValue {
-        let mut hash = [0u8; 32];
-
-        for byte in &mut hash {
-            *byte = u8::arbitrary(g);
-        }
-
-        HashValue(hash)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::HashValue;
@@ -76,6 +63,18 @@ mod tests {
     use quickcheck_macros::quickcheck;
 
     use std::convert::TryFrom;
+
+    impl quickcheck::Arbitrary for HashValue {
+        fn arbitrary<G: quickcheck::Gen>(g: &mut G) -> HashValue {
+            let mut hash = [0u8; 32];
+
+            for byte in &mut hash {
+                *byte = u8::arbitrary(g);
+            }
+
+            HashValue(hash)
+        }
+    }
 
     #[quickcheck]
     fn prop_hash_bytes(hash: HashValue) {

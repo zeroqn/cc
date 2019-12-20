@@ -19,4 +19,3 @@ sha2 = "0.8"
 quickcheck = "0.8"
 quickcheck_macros = "0.8"
 ophelia-quickcheck = { path = "../ophelia-quickcheck" }
-ophelia-hasher = { path = "../ophelia-hasher", features = ["proptest"] }

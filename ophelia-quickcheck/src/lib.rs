@@ -1,4 +1,19 @@
+use ophelia_hasher::HashValue;
+
 use quickcheck::{Arbitrary, Gen};
+
+#[macro_export]
+macro_rules! impl_quickcheck_for_privatekey {
+    ($priv_key:ident) => {
+        impl quickcheck::Arbitrary for $priv_key {
+            fn arbitrary<G: quickcheck::Gen>(g: &mut G) -> $priv_key {
+                let octet32 = ophelia_quickcheck::Octet32::arbitrary(g);
+
+                $priv_key::try_from(octet32.as_ref()).unwrap()
+            }
+        }
+    };
+}
 
 // TODO: SeedableRng?
 #[derive(Clone, Debug)]
@@ -22,15 +37,23 @@ impl Arbitrary for Octet32 {
     }
 }
 
-#[macro_export]
-macro_rules! impl_quickcheck_for_privatekey {
-    ($priv_key:ident) => {
-        impl quickcheck::Arbitrary for $priv_key {
-            fn arbitrary<G: quickcheck::Gen>(g: &mut G) -> $priv_key {
-                let octet32 = ophelia_quickcheck::Octet32::arbitrary(g);
+#[derive(Clone, Debug)]
+pub struct AHashValue(HashValue);
 
-                $priv_key::try_from(octet32.as_ref()).unwrap()
-            }
+impl AHashValue {
+    pub fn into_inner(self) -> HashValue {
+        self.0
+    }
+}
+
+impl quickcheck::Arbitrary for AHashValue {
+    fn arbitrary<G: quickcheck::Gen>(g: &mut G) -> AHashValue {
+        let mut hash = [0u8; 32];
+
+        for byte in &mut hash {
+            *byte = u8::arbitrary(g);
         }
-    };
+
+        AHashValue(HashValue::from_bytes_unchecked(hash))
+    }
 }

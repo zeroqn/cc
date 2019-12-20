@@ -246,8 +246,8 @@ impl From<Ed25519Error> for CryptoError {
 mod tests {
     use super::{Ed25519Error, Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature};
 
-    use ophelia::{CryptoError, HashValue, PrivateKey, PublicKey, Signature};
-    use ophelia_quickcheck::impl_quickcheck_for_privatekey;
+    use ophelia::{CryptoError, PrivateKey, PublicKey, Signature};
+    use ophelia_quickcheck::{impl_quickcheck_for_privatekey, AHashValue};
 
     use curve25519_dalek::scalar::Scalar;
     use quickcheck_macros::quickcheck;
@@ -434,7 +434,8 @@ mod tests {
 
     #[ignore]
     #[quickcheck]
-    fn prop_malleable_signature_should_not_pass(msg: HashValue, priv_key: Ed25519PrivateKey) {
+    fn prop_malleable_signature_should_not_pass(msg: AHashValue, priv_key: Ed25519PrivateKey) {
+        let msg = msg.into_inner();
         let pub_key = priv_key.pub_key();
         let sig = priv_key.sign_message(&msg);
 
@@ -488,14 +489,15 @@ mod tests {
     }
 
     #[quickcheck]
-    fn prop_signature_bytes_serialization(msg: HashValue, priv_key: Ed25519PrivateKey) -> bool {
-        let sig = priv_key.sign_message(&msg);
+    fn prop_signature_bytes_serialization(msg: AHashValue, priv_key: Ed25519PrivateKey) -> bool {
+        let sig = priv_key.sign_message(&msg.into_inner());
 
         ed25519_dalek::Signature::from_bytes(&sig.to_bytes()).is_ok()
     }
 
     #[quickcheck]
-    fn prop_message_sign_and_verify(msg: HashValue, priv_key: Ed25519PrivateKey) -> bool {
+    fn prop_message_sign_and_verify(msg: AHashValue, priv_key: Ed25519PrivateKey) -> bool {
+        let msg = msg.into_inner();
         let pub_key = priv_key.pub_key();
         let sig = priv_key.sign_message(&msg);
 
