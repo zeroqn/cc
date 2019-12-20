@@ -1,12 +1,10 @@
-pub mod error;
-pub use error::{CryptoError, CryptoKind};
-
+pub use anyhow::Error;
 pub use bytes::Bytes;
 pub use ophelia_hasher::{HashValue, Hasher};
 
 use std::convert::TryFrom;
 
-pub trait PrivateKey: for<'a> TryFrom<&'a [u8], Error = CryptoError> + Clone {
+pub trait PrivateKey: for<'a> TryFrom<&'a [u8], Error = Error> + Clone {
     type PublicKey;
     type Signature;
 
@@ -19,7 +17,7 @@ pub trait PrivateKey: for<'a> TryFrom<&'a [u8], Error = CryptoError> + Clone {
     fn to_bytes(&self) -> Bytes;
 }
 
-pub trait PublicKey: for<'a> TryFrom<&'a [u8], Error = CryptoError> + Clone {
+pub trait PublicKey: for<'a> TryFrom<&'a [u8], Error = Error> + Clone {
     type Signature;
 
     const LENGTH: usize;
@@ -27,10 +25,10 @@ pub trait PublicKey: for<'a> TryFrom<&'a [u8], Error = CryptoError> + Clone {
     fn to_bytes(&self) -> Bytes;
 }
 
-pub trait Signature: for<'a> TryFrom<&'a [u8], Error = CryptoError> + Clone {
+pub trait Signature: for<'a> TryFrom<&'a [u8], Error = Error> + Clone {
     type PublicKey;
 
-    fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), CryptoError>;
+    fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), Error>;
 
     fn to_bytes(&self) -> Bytes;
 }
@@ -40,20 +38,20 @@ pub trait Crypto {
     type PublicKey: PublicKey<Signature = Self::Signature>;
     type Signature: Signature<PublicKey = Self::PublicKey>;
 
-    fn pub_key(priv_key: &[u8]) -> Result<Self::PublicKey, CryptoError> {
+    fn pub_key(priv_key: &[u8]) -> Result<Self::PublicKey, Error> {
         let priv_key = Self::PrivateKey::try_from(priv_key)?;
 
         Ok(priv_key.pub_key())
     }
 
-    fn sign_message(msg: &[u8], priv_key: &[u8]) -> Result<Self::Signature, CryptoError> {
+    fn sign_message(msg: &[u8], priv_key: &[u8]) -> Result<Self::Signature, Error> {
         let priv_key = Self::PrivateKey::try_from(priv_key)?;
         let msg = HashValue::try_from(msg)?;
 
         Ok(priv_key.sign_message(&msg))
     }
 
-    fn verify_signature(msg: &[u8], sig: &[u8], pub_key: &[u8]) -> Result<(), CryptoError> {
+    fn verify_signature(msg: &[u8], sig: &[u8], pub_key: &[u8]) -> Result<(), Error> {
         let msg = HashValue::try_from(msg)?;
         let sig = Self::Signature::try_from(sig)?;
         let pub_key = Self::PublicKey::try_from(pub_key)?;

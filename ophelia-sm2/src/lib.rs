@@ -1,6 +1,4 @@
-use ophelia::{
-    Bytes, Crypto, CryptoError, CryptoKind, HashValue, PrivateKey, PublicKey, Signature,
-};
+use ophelia::{Bytes, Crypto, Error, HashValue, PrivateKey, PublicKey, Signature};
 use ophelia_derive::SecretDebug;
 
 use lazy_static::lazy_static;
@@ -10,6 +8,16 @@ use std::convert::TryFrom;
 
 lazy_static! {
     static ref SM2_CONTEXT: SigCtx = SigCtx::new();
+}
+
+#[derive(thiserror::Error, Debug)]
+enum InternalError {
+    #[error("invalid public key")]
+    InvalidPublicKey,
+    #[error("invalid private key")]
+    InvalidPrivateKey,
+    #[error("invalid signature")]
+    InvalidSignature,
 }
 
 #[derive(SecretDebug, PartialEq, Clone)]
@@ -33,12 +41,12 @@ impl Crypto for Sm2 {
 //
 
 impl TryFrom<&[u8]> for SM2PrivateKey {
-    type Error = CryptoError;
+    type Error = Error;
 
     fn try_from(bytes: &[u8]) -> Result<SM2PrivateKey, Self::Error> {
         let secret_key = SM2_CONTEXT
             .load_seckey(bytes)
-            .map_err(|_| CryptoKind::PrivateKey)?;
+            .map_err(|_| InternalError::InvalidPrivateKey)?;
 
         Ok(SM2PrivateKey(secret_key))
     }
@@ -75,12 +83,12 @@ impl PrivateKey for SM2PrivateKey {
 //
 
 impl TryFrom<&[u8]> for SM2PublicKey {
-    type Error = CryptoError;
+    type Error = Error;
 
     fn try_from(bytes: &[u8]) -> Result<SM2PublicKey, Self::Error> {
         let pub_key = SM2_CONTEXT
             .load_pubkey(bytes)
-            .map_err(|_| CryptoKind::PublicKey)?;
+            .map_err(|_| InternalError::InvalidPublicKey)?;
 
         Ok(SM2PublicKey(pub_key))
     }
@@ -105,10 +113,10 @@ impl PublicKey for SM2PublicKey {
 //
 
 impl TryFrom<&[u8]> for SM2Signature {
-    type Error = CryptoError;
+    type Error = Error;
 
     fn try_from(bytes: &[u8]) -> Result<SM2Signature, Self::Error> {
-        let sig = sm2::Signature::der_decode(bytes).map_err(|_| CryptoKind::Signature)?;
+        let sig = sm2::Signature::der_decode(bytes).map_err(|_| InternalError::InvalidSignature)?;
 
         Ok(SM2Signature(sig))
     }
@@ -128,9 +136,9 @@ impl Clone for SM2Signature {
 impl Signature for SM2Signature {
     type PublicKey = SM2PublicKey;
 
-    fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), CryptoError> {
+    fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), Error> {
         if !SM2_CONTEXT.verify_raw(msg.as_ref(), &pub_key.0, &self.0) {
-            return Err(CryptoKind::Signature.into());
+            return Err(InternalError::InvalidSignature)?;
         }
 
         Ok(())

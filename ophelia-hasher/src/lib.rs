@@ -1,17 +1,12 @@
-use std::{convert::TryFrom, error::Error};
-
-use derive_more::Display;
+use std::convert::TryFrom;
 
 pub const HASH_VALUE_LENGTH: usize = 32;
 
-#[derive(Debug, Display)]
-#[display(fmt = "wrong length: expect {}, got {}", expect, got)]
-pub struct WrongLengthError {
-    expect: usize,
-    got: usize,
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("length mismatch, expect {target} got {real}")]
+    LengthMisMatch { target: usize, real: usize },
 }
-
-impl Error for WrongLengthError {}
 
 pub trait Hasher {
     fn digest(&self, data: &[u8]) -> HashValue;
@@ -33,13 +28,13 @@ impl HashValue {
 }
 
 impl TryFrom<&[u8]> for HashValue {
-    type Error = WrongLengthError;
+    type Error = Error;
 
     fn try_from(bytes: &[u8]) -> Result<HashValue, Self::Error> {
         if bytes.len() != HASH_VALUE_LENGTH {
-            return Err(WrongLengthError {
-                expect: HASH_VALUE_LENGTH,
-                got: bytes.len(),
+            return Err(Error::LengthMisMatch {
+                target: HASH_VALUE_LENGTH,
+                real: bytes.len(),
             });
         }
 
