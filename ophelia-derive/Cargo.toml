@@ -10,5 +10,5 @@ description = "ophelia derive macros"
 proc-macro = true
 
 [dependencies]
-syn = "0.15"
-quote = "0.6"
+syn = "1.0"
+quote = "1.0"

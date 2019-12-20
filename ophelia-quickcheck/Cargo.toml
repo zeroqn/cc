@@ -7,5 +7,5 @@ license = "MIT"
 description = "ophelia quickcheck"
 
 [dependencies]
-quickcheck = "0.8"
 ophelia-hasher = { path = "../ophelia-hasher", version = "0.1" }
+quickcheck = "0.9"

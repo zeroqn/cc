@@ -11,5 +11,5 @@ ophelia-hasher = { path = "../ophelia-hasher", version = "0.1" }
 libsm = { git = "https://github.com/cryptape/libsm", rev = "ac323abd3512a9fdb8bfd6cd349a6fc46deb688f" }
 
 [dev-dependencies]
-quickcheck = "0.8"
+quickcheck = "0.9"
 quickcheck_macros = "0.8"
