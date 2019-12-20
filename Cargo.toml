@@ -4,7 +4,7 @@ members = [
   "ophelia",
   "ophelia-secp256k1",
   "ophelia-ed25519",
-  "ophelia-quickcheck-types",
+  "ophelia-quickcheck",
   "ophelia-derive",
   "ophelia-sm2",
   "ophelia-hasher",

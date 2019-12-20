@@ -1,6 +1,5 @@
-use ophelia::{
-    Bytes, Crypto, CryptoError, CryptoKind, HashValue, PrivateKey, PublicKey, Signature,
-};
+use ophelia::{Bytes, Crypto, Error, HashValue, PrivateKey, PublicKey, Signature};
+use ophelia::{CryptoRng, RngCore};
 use ophelia_derive::SecretDebug;
 
 use lazy_static::lazy_static;
@@ -12,13 +11,15 @@ lazy_static! {
     static ref SM2_CONTEXT: SigCtx = SigCtx::new();
 }
 
-#[derive(SecretDebug, PartialEq, Clone)]
-pub struct SM2PrivateKey(sm2::Seckey);
-
-#[derive(Clone)]
-pub struct SM2PublicKey(sm2::Pubkey);
-
-pub struct SM2Signature(sm2::Signature);
+#[derive(thiserror::Error, Debug)]
+enum InternalError {
+    #[error("invalid public key")]
+    InvalidPublicKey,
+    #[error("invalid private key")]
+    InvalidPrivateKey,
+    #[error("invalid signature")]
+    InvalidSignature,
+}
 
 pub struct Sm2;
 
@@ -28,17 +29,16 @@ impl Crypto for Sm2 {
     type Signature = SM2Signature;
 }
 
-//
-// PrivateKey Impl
-//
+#[derive(SecretDebug, PartialEq, Clone)]
+pub struct SM2PrivateKey(sm2::Seckey);
 
 impl TryFrom<&[u8]> for SM2PrivateKey {
-    type Error = CryptoError;
+    type Error = Error;
 
     fn try_from(bytes: &[u8]) -> Result<SM2PrivateKey, Self::Error> {
         let secret_key = SM2_CONTEXT
             .load_seckey(bytes)
-            .map_err(|_| CryptoKind::PrivateKey)?;
+            .map_err(|_| InternalError::InvalidPrivateKey)?;
 
         Ok(SM2PrivateKey(secret_key))
     }
@@ -49,6 +49,12 @@ impl PrivateKey for SM2PrivateKey {
     type Signature = SM2Signature;
 
     const LENGTH: usize = 32;
+
+    fn generate<R: RngCore + CryptoRng>(_: &mut R) -> Self {
+        let (_pub_key, secret_key) = SM2_CONTEXT.new_keypair();
+
+        SM2PrivateKey(secret_key)
+    }
 
     fn sign_message(&self, msg: &HashValue) -> Self::Signature {
         let sig = SM2_CONTEXT.sign_raw(msg.as_ref(), &self.0);
@@ -70,17 +76,16 @@ impl PrivateKey for SM2PrivateKey {
     }
 }
 
-//
-// PublicKey Impl
-//
+#[derive(Clone)]
+pub struct SM2PublicKey(sm2::Pubkey);
 
 impl TryFrom<&[u8]> for SM2PublicKey {
-    type Error = CryptoError;
+    type Error = Error;
 
     fn try_from(bytes: &[u8]) -> Result<SM2PublicKey, Self::Error> {
         let pub_key = SM2_CONTEXT
             .load_pubkey(bytes)
-            .map_err(|_| CryptoKind::PublicKey)?;
+            .map_err(|_| InternalError::InvalidPublicKey)?;
 
         Ok(SM2PublicKey(pub_key))
     }
@@ -100,15 +105,13 @@ impl PublicKey for SM2PublicKey {
     }
 }
 
-//
-// Signature Impl
-//
+pub struct SM2Signature(sm2::Signature);
 
 impl TryFrom<&[u8]> for SM2Signature {
-    type Error = CryptoError;
+    type Error = Error;
 
     fn try_from(bytes: &[u8]) -> Result<SM2Signature, Self::Error> {
-        let sig = sm2::Signature::der_decode(bytes).map_err(|_| CryptoKind::Signature)?;
+        let sig = sm2::Signature::der_decode(bytes).map_err(|_| InternalError::InvalidSignature)?;
 
         Ok(SM2Signature(sig))
     }
@@ -128,9 +131,9 @@ impl Clone for SM2Signature {
 impl Signature for SM2Signature {
     type PublicKey = SM2PublicKey;
 
-    fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), CryptoError> {
+    fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), Error> {
         if !SM2_CONTEXT.verify_raw(msg.as_ref(), &pub_key.0, &self.0) {
-            return Err(CryptoKind::Signature.into());
+            return Err(InternalError::InvalidSignature)?;
         }
 
         Ok(())
@@ -145,13 +148,24 @@ impl Signature for SM2Signature {
 mod tests {
     use super::{SM2PrivateKey, SM2PublicKey, SM2Signature};
 
-    use ophelia::{impl_quickcheck_arbitrary, HashValue, PrivateKey, PublicKey, Signature};
-
+    use ophelia::{PrivateKey, PublicKey, Signature};
+    use ophelia_quickcheck::{impl_quickcheck_for_privatekey, AHashValue};
     use quickcheck_macros::quickcheck;
+    use rand::rngs::OsRng;
 
     use std::convert::TryFrom;
 
-    impl_quickcheck_arbitrary!(SM2PrivateKey);
+    impl_quickcheck_for_privatekey!(SM2PrivateKey);
+
+    #[quickcheck]
+    fn should_generate_workable_key(msg: AHashValue) -> bool {
+        let msg = msg.into_inner();
+        let priv_key = SM2PrivateKey::generate(&mut OsRng);
+        let pub_key = priv_key.pub_key();
+
+        let sig = priv_key.sign_message(&msg);
+        sig.verify(&msg, &pub_key).is_ok()
+    }
 
     #[quickcheck]
     fn prop_private_key_bytes_serialization(priv_key: SM2PrivateKey) -> bool {
@@ -170,14 +184,15 @@ mod tests {
 
     // FIXME: inconsistent signature serialized bytes
     #[quickcheck]
-    fn prop_signature_bytes_serialization(msg: HashValue, priv_key: SM2PrivateKey) -> bool {
-        let sig = priv_key.sign_message(&msg);
+    fn prop_signature_bytes_serialization(msg: AHashValue, priv_key: SM2PrivateKey) -> bool {
+        let sig = priv_key.sign_message(&msg.into_inner());
 
         SM2Signature::try_from(sig.to_bytes().as_ref()).is_ok()
     }
 
     #[quickcheck]
-    fn prop_message_sign_and_verify(msg: HashValue, priv_key: SM2PrivateKey) -> bool {
+    fn prop_message_sign_and_verify(msg: AHashValue, priv_key: SM2PrivateKey) -> bool {
+        let msg = msg.into_inner();
         let pub_key = priv_key.pub_key();
         let sig = priv_key.sign_message(&msg);
 

@@ -8,9 +8,8 @@ description = "ophelia keccak256 hasher"
 
 [dependencies]
 ophelia-hasher = { path = "../ophelia-hasher", version = "0.1" }
-
-tiny-keccak = "1.5"
+tiny-keccak = { version = "2.0", features = ["keccak"] }
 
 [dev-dependencies]
-quickcheck = "0.8"
+quickcheck = "0.9"
 quickcheck_macros = "0.8"

@@ -7,30 +7,7 @@ license = "MIT"
 description = "ophelia crypto collection"
 
 [dependencies]
+anyhow = "1.0"
+bytes = "0.5"
 ophelia-hasher = { path = "../ophelia-hasher", version = "0.1" }
-bytes = "0.4"
-derive_more = "0.15"
-
-[dependencies.rand]
-version = "0.6"
-optional = true
-default-features = false
-
-[dependencies.quickcheck]
-version = "0.8"
-optional = true
-default-features = false
-
-[dependencies.ophelia-quickcheck-types]
-path = "../ophelia-quickcheck-types"
-version = "0.1"
-optional = true
-default-features = false
-
-[dev-dependencies]
-quickcheck = "0.8"
-quickcheck_macros = "0.8"
-
-[features]
-default = []
-proptest = [ "quickcheck", "ophelia-quickcheck-types", "ophelia-hasher/proptest" ]
+rand_core = "0.5"

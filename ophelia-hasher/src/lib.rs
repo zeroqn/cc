@@ -1,17 +1,12 @@
-use std::{convert::TryFrom, error::Error};
-
-use derive_more::Display;
+use std::convert::TryFrom;
 
 pub const HASH_VALUE_LENGTH: usize = 32;
 
-#[derive(Debug, Display)]
-#[display(fmt = "wrong length: expect {}, got {}", expect, got)]
-pub struct WrongLengthError {
-    expect: usize,
-    got: usize,
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("length mismatch, expect {target} got {real}")]
+    LengthMisMatch { target: usize, real: usize },
 }
-
-impl Error for WrongLengthError {}
 
 pub trait Hasher {
     fn digest(&self, data: &[u8]) -> HashValue;
@@ -33,13 +28,13 @@ impl HashValue {
 }
 
 impl TryFrom<&[u8]> for HashValue {
-    type Error = WrongLengthError;
+    type Error = Error;
 
     fn try_from(bytes: &[u8]) -> Result<HashValue, Self::Error> {
         if bytes.len() != HASH_VALUE_LENGTH {
-            return Err(WrongLengthError {
-                expect: HASH_VALUE_LENGTH,
-                got: bytes.len(),
+            return Err(Error::LengthMisMatch {
+                target: HASH_VALUE_LENGTH,
+                real: bytes.len(),
             });
         }
 
@@ -56,19 +51,6 @@ impl AsRef<[u8]> for HashValue {
     }
 }
 
-#[cfg(any(test, feature = "proptest"))]
-impl quickcheck::Arbitrary for HashValue {
-    fn arbitrary<G: quickcheck::Gen>(g: &mut G) -> HashValue {
-        let mut hash = [0u8; 32];
-
-        for byte in &mut hash {
-            *byte = u8::arbitrary(g);
-        }
-
-        HashValue(hash)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::HashValue;
@@ -76,6 +58,18 @@ mod tests {
     use quickcheck_macros::quickcheck;
 
     use std::convert::TryFrom;
+
+    impl quickcheck::Arbitrary for HashValue {
+        fn arbitrary<G: quickcheck::Gen>(g: &mut G) -> HashValue {
+            let mut hash = [0u8; 32];
+
+            for byte in &mut hash {
+                *byte = u8::arbitrary(g);
+            }
+
+            HashValue(hash)
+        }
+    }
 
     #[quickcheck]
     fn prop_hash_bytes(hash: HashValue) {

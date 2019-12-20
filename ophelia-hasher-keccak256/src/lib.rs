@@ -1,10 +1,16 @@
-use ophelia_hasher::{HashValue, Hasher};
+use ophelia_hasher::HashValue;
 
 pub struct Keccak256;
 
-impl Hasher for Keccak256 {
+impl ophelia_hasher::Hasher for Keccak256 {
     fn digest(&self, data: &[u8]) -> HashValue {
-        let bytes = tiny_keccak::keccak256(data);
+        use tiny_keccak::Hasher;
+
+        let mut bytes = [0u8; HashValue::LENGTH];
+        let mut keccak = tiny_keccak::Keccak::v256();
+
+        keccak.update(data);
+        keccak.finalize(&mut bytes);
 
         assert_eq!(bytes.len(), HashValue::LENGTH);
 
@@ -22,6 +28,14 @@ mod tests {
 
     #[quickcheck]
     fn prop_keccak256_bytes(msg: String) -> bool {
-        Keccak256.digest(msg.as_bytes()).to_bytes() == tiny_keccak::keccak256(msg.as_bytes())
+        use tiny_keccak::Hasher;
+
+        let mut bytes = [0u8; 32];
+        let mut keccak = tiny_keccak::Keccak::v256();
+
+        keccak.update(msg.as_bytes());
+        keccak.finalize(&mut bytes);
+
+        Keccak256.digest(msg.as_bytes()).to_bytes() == bytes
     }
 }
