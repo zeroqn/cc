@@ -1,4 +1,4 @@
-use ophelia::{Bytes, Crypto, Error, HashValue, PrivateKey, PublicKey, Signature};
+use ophelia::{Bytes, BytesMut, Crypto, Error, HashValue, PrivateKey, PublicKey, Signature};
 use ophelia_derive::SecretDebug;
 
 use lazy_static::lazy_static;
@@ -54,10 +54,7 @@ impl PrivateKey for Secp256k1PrivateKey {
     }
 
     fn to_bytes(&self) -> Bytes {
-        let mut bytes = Bytes::with_capacity(Self::LENGTH);
-        bytes.extend_from_slice(&self.0[..]);
-
-        bytes
+        BytesMut::from(&self.0[..]).freeze()
     }
 }
 
@@ -80,7 +77,7 @@ impl PublicKey for Secp256k1PublicKey {
     const LENGTH: usize = PUBLIC_KEY_SIZE;
 
     fn to_bytes(&self) -> Bytes {
-        self.0.serialize().as_ref().into()
+        BytesMut::from(self.0.serialize().as_ref()).freeze()
     }
 }
 
@@ -107,7 +104,7 @@ impl Signature for Secp256k1Signature {
     }
 
     fn to_bytes(&self) -> Bytes {
-        self.0.serialize_compact().as_ref().into()
+        BytesMut::from(self.0.serialize_compact().as_ref()).freeze()
     }
 }
 

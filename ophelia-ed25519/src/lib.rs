@@ -1,6 +1,6 @@
 // TODO: documents
 
-use ophelia::{Bytes, Crypto, Error, HashValue, PrivateKey, PublicKey, Signature};
+use ophelia::{Bytes, BytesMut, Crypto, Error, HashValue, PrivateKey, PublicKey, Signature};
 use ophelia_derive::SecretDebug;
 
 use curve25519_dalek::scalar::Scalar;
@@ -67,7 +67,7 @@ impl PrivateKey for Ed25519PrivateKey {
     }
 
     fn to_bytes(&self) -> Bytes {
-        self.0.as_bytes().as_ref().into()
+        BytesMut::from(self.0.as_bytes().as_ref()).freeze()
     }
 }
 
@@ -118,7 +118,7 @@ impl PublicKey for Ed25519PublicKey {
     const LENGTH: usize = PUBLIC_KEY_LENGTH;
 
     fn to_bytes(&self) -> Bytes {
-        self.0.as_bytes().as_ref().into()
+        BytesMut::from(self.0.as_bytes().as_ref()).freeze()
     }
 }
 
@@ -175,7 +175,7 @@ impl Signature for Ed25519Signature {
     }
 
     fn to_bytes(&self) -> Bytes {
-        self.0.to_bytes().as_ref().into()
+        BytesMut::from(self.0.to_bytes().as_ref()).freeze()
     }
 }
 

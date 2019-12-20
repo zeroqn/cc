@@ -1,5 +1,5 @@
 pub use anyhow::Error;
-pub use bytes::Bytes;
+pub use bytes::{Buf, BufMut, Bytes, BytesMut};
 pub use ophelia_hasher::{HashValue, Hasher};
 
 use std::convert::TryFrom;
