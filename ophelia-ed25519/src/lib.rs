@@ -203,6 +203,110 @@ mod tests {
     use std::fmt::Debug;
     use std::ops::{Index, IndexMut};
 
+    impl_quickcheck_for_privatekey!(Ed25519PrivateKey);
+
+    impl Ed25519Signature {
+        fn from_bytes_unchecked(bytes: &[u8]) -> Result<Ed25519Signature, Error> {
+            let sig = ed25519_dalek::Signature::from_bytes(bytes)?;
+
+            Ok(Ed25519Signature(sig))
+        }
+    }
+
+    #[test]
+    fn should_result_small_subgroup_error_on_torsion_group() {
+        for point_bytes in &EIGHT_TORSION {
+            // It's ok in dalek
+            assert!(ed25519_dalek::PublicKey::from_bytes(point_bytes).is_ok());
+
+            // Should not pass in our implementation
+            assert!(Ed25519PublicKey::try_from(point_bytes as &[u8]).is_err());
+        }
+    }
+
+    #[ignore]
+    #[quickcheck]
+    fn prop_malleable_signature_should_not_pass(msg: AHashValue, priv_key: Ed25519PrivateKey) {
+        let msg = msg.into_inner();
+        let pub_key = priv_key.pub_key();
+        let sig = priv_key.sign_message(&msg);
+
+        assert!(sig.verify(&msg, &pub_key).is_ok());
+
+        let mut s_bits: [u8; 32] = [0; 32];
+        s_bits.copy_from_slice(&sig.to_bytes()[32..]);
+
+        // Verify canoncial bytes
+        assert!(Scalar::from_canonical_bytes(s_bits).is_some());
+
+        // Signature is malleable, modify scalar, add base point to crate one
+        let scalar52 = {
+            let s = Scalar52::from_bytes(&s_bits);
+            Scalar52::add(&s, &L)
+        };
+
+        let modified_sig_bytes: [u8; 64] = {
+            let mut sig_bytes = sig.0.to_bytes();
+            sig_bytes[32..].copy_from_slice(&scalar52.to_bytes());
+            sig_bytes
+        };
+
+        // Modified signature is able to pass dalek check
+        let dalek_sig = ed25519_dalek::Signature::from_bytes(&modified_sig_bytes);
+        let dalek_pub_key = &pub_key.0;
+
+        assert!(dalek_sig.is_ok());
+        assert!(dalek_pub_key
+            .verify(msg.as_ref(), &dalek_sig.unwrap())
+            .is_ok());
+
+        // Modified signature should not pass in our implementation
+        assert!(Ed25519Signature::try_from(&modified_sig_bytes as &[u8]).is_err());
+
+        let modified_sig: Ed25519Signature =
+            Ed25519Signature::from_bytes_unchecked(&modified_sig_bytes as &[u8]).unwrap();
+        assert!(modified_sig.verify(&msg, &pub_key).is_err());
+    }
+
+    #[quickcheck]
+    fn should_generate_workable_key(msg: AHashValue) -> bool {
+        let msg = msg.into_inner();
+        let priv_key = Ed25519PrivateKey::generate(&mut OsRng);
+        let pub_key = priv_key.pub_key();
+
+        let sig = priv_key.sign_message(&msg);
+        sig.verify(&msg, &pub_key).is_ok()
+    }
+
+    #[quickcheck]
+    fn prop_private_key_bytes_serialization(priv_key: Ed25519PrivateKey) -> bool {
+        ed25519_dalek::SecretKey::from_bytes(&priv_key.to_bytes()).is_ok()
+    }
+
+    #[quickcheck]
+    fn prop_public_key_bytes_serialization(priv_key: Ed25519PrivateKey) -> bool {
+        let pub_key = priv_key.pub_key();
+
+        ed25519_dalek::PublicKey::from_bytes(&pub_key.to_bytes()).is_ok()
+    }
+
+    #[quickcheck]
+    fn prop_signature_bytes_serialization(msg: AHashValue, priv_key: Ed25519PrivateKey) -> bool {
+        let sig = priv_key.sign_message(&msg.into_inner());
+
+        ed25519_dalek::Signature::from_bytes(&sig.to_bytes()).is_ok()
+    }
+
+    #[quickcheck]
+    fn prop_message_sign_and_verify(msg: AHashValue, priv_key: Ed25519PrivateKey) -> bool {
+        let msg = msg.into_inner();
+        let pub_key = priv_key.pub_key();
+        let sig = priv_key.sign_message(&msg);
+
+        assert!(sig.verify(&msg, &pub_key).is_ok());
+        pub_key.0.verify(msg.as_ref(), &sig.0).is_ok()
+    }
+
     // from curve25519_dalek/src/backend/serial/u64
     /// `L` is the order of base point, i.e. 2^252 + 27742317777372353535851937790883648493
     const L: Scalar52 = Scalar52([
@@ -356,108 +460,4 @@ mod tests {
             44, 57, 204, 198, 78, 199, 253, 119, 146, 172, 3, 250,
         ],
     ];
-
-    impl_quickcheck_for_privatekey!(Ed25519PrivateKey);
-
-    impl Ed25519Signature {
-        fn from_bytes_unchecked(bytes: &[u8]) -> Result<Ed25519Signature, Error> {
-            let sig = ed25519_dalek::Signature::from_bytes(bytes)?;
-
-            Ok(Ed25519Signature(sig))
-        }
-    }
-
-    #[test]
-    fn should_result_small_subgroup_error_on_torsion_group() {
-        for point_bytes in &EIGHT_TORSION {
-            // It's ok in dalek
-            assert!(ed25519_dalek::PublicKey::from_bytes(point_bytes).is_ok());
-
-            // Should not pass in our implementation
-            assert!(Ed25519PublicKey::try_from(point_bytes as &[u8]).is_err());
-        }
-    }
-
-    #[ignore]
-    #[quickcheck]
-    fn prop_malleable_signature_should_not_pass(msg: AHashValue, priv_key: Ed25519PrivateKey) {
-        let msg = msg.into_inner();
-        let pub_key = priv_key.pub_key();
-        let sig = priv_key.sign_message(&msg);
-
-        assert!(sig.verify(&msg, &pub_key).is_ok());
-
-        let mut s_bits: [u8; 32] = [0; 32];
-        s_bits.copy_from_slice(&sig.to_bytes()[32..]);
-
-        // Verify canoncial bytes
-        assert!(Scalar::from_canonical_bytes(s_bits).is_some());
-
-        // Signature is malleable, modify scalar, add base point to crate one
-        let scalar52 = {
-            let s = Scalar52::from_bytes(&s_bits);
-            Scalar52::add(&s, &L)
-        };
-
-        let modified_sig_bytes: [u8; 64] = {
-            let mut sig_bytes = sig.0.to_bytes();
-            sig_bytes[32..].copy_from_slice(&scalar52.to_bytes());
-            sig_bytes
-        };
-
-        // Modified signature is able to pass dalek check
-        let dalek_sig = ed25519_dalek::Signature::from_bytes(&modified_sig_bytes);
-        let dalek_pub_key = &pub_key.0;
-
-        assert!(dalek_sig.is_ok());
-        assert!(dalek_pub_key
-            .verify(msg.as_ref(), &dalek_sig.unwrap())
-            .is_ok());
-
-        // Modified signature should not pass in our implementation
-        assert!(Ed25519Signature::try_from(&modified_sig_bytes as &[u8]).is_err());
-
-        let modified_sig: Ed25519Signature =
-            Ed25519Signature::from_bytes_unchecked(&modified_sig_bytes as &[u8]).unwrap();
-        assert!(modified_sig.verify(&msg, &pub_key).is_err());
-    }
-
-    #[quickcheck]
-    fn should_generate_workable_key(msg: AHashValue) -> bool {
-        let msg = msg.into_inner();
-        let priv_key = Ed25519PrivateKey::generate(&mut OsRng);
-        let pub_key = priv_key.pub_key();
-
-        let sig = priv_key.sign_message(&msg);
-        sig.verify(&msg, &pub_key).is_ok()
-    }
-
-    #[quickcheck]
-    fn prop_private_key_bytes_serialization(priv_key: Ed25519PrivateKey) -> bool {
-        ed25519_dalek::SecretKey::from_bytes(&priv_key.to_bytes()).is_ok()
-    }
-
-    #[quickcheck]
-    fn prop_public_key_bytes_serialization(priv_key: Ed25519PrivateKey) -> bool {
-        let pub_key = priv_key.pub_key();
-
-        ed25519_dalek::PublicKey::from_bytes(&pub_key.to_bytes()).is_ok()
-    }
-
-    #[quickcheck]
-    fn prop_signature_bytes_serialization(msg: AHashValue, priv_key: Ed25519PrivateKey) -> bool {
-        let sig = priv_key.sign_message(&msg.into_inner());
-
-        ed25519_dalek::Signature::from_bytes(&sig.to_bytes()).is_ok()
-    }
-
-    #[quickcheck]
-    fn prop_message_sign_and_verify(msg: AHashValue, priv_key: Ed25519PrivateKey) -> bool {
-        let msg = msg.into_inner();
-        let pub_key = priv_key.pub_key();
-        let sig = priv_key.sign_message(&msg);
-
-        assert!(sig.verify(&msg, &pub_key).is_ok());
-        pub_key.0.verify(msg.as_ref(), &sig.0).is_ok()
-    }
 }
