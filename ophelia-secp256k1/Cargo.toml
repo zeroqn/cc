@@ -17,3 +17,4 @@ sha2 = "0.8"
 quickcheck = "0.9"
 quickcheck_macros = "0.8"
 ophelia-quickcheck = { path = "../ophelia-quickcheck" }
+rand = "0.7"

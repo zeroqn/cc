@@ -1,4 +1,5 @@
 use ophelia::{Bytes, Crypto, Error, HashValue, PrivateKey, PublicKey, Signature};
+use ophelia::{CryptoRng, RngCore};
 use ophelia_derive::SecretDebug;
 
 use lazy_static::lazy_static;
@@ -48,6 +49,12 @@ impl PrivateKey for SM2PrivateKey {
     type Signature = SM2Signature;
 
     const LENGTH: usize = 32;
+
+    fn generate<R: RngCore + CryptoRng>(_: &mut R) -> Self {
+        let (_pub_key, secret_key) = SM2_CONTEXT.new_keypair();
+
+        SM2PrivateKey(secret_key)
+    }
 
     fn sign_message(&self, msg: &HashValue) -> Self::Signature {
         let sig = SM2_CONTEXT.sign_raw(msg.as_ref(), &self.0);
@@ -143,12 +150,22 @@ mod tests {
 
     use ophelia::{PrivateKey, PublicKey, Signature};
     use ophelia_quickcheck::{impl_quickcheck_for_privatekey, AHashValue};
-
     use quickcheck_macros::quickcheck;
+    use rand::rngs::OsRng;
 
     use std::convert::TryFrom;
 
     impl_quickcheck_for_privatekey!(SM2PrivateKey);
+
+    #[quickcheck]
+    fn should_generate_workable_key(msg: AHashValue) -> bool {
+        let msg = msg.into_inner();
+        let priv_key = SM2PrivateKey::generate(&mut OsRng);
+        let pub_key = priv_key.pub_key();
+
+        let sig = priv_key.sign_message(&msg);
+        sig.verify(&msg, &pub_key).is_ok()
+    }
 
     #[quickcheck]
     fn prop_private_key_bytes_serialization(priv_key: SM2PrivateKey) -> bool {

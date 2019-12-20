@@ -7,6 +7,7 @@ license = "MIT"
 description = "ophelia crypto collection"
 
 [dependencies]
-ophelia-hasher = { path = "../ophelia-hasher", version = "0.1" }
-bytes = "0.5"
 anyhow = "1.0"
+bytes = "0.5"
+ophelia-hasher = { path = "../ophelia-hasher", version = "0.1" }
+rand_core = "0.5"

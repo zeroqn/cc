@@ -1,4 +1,5 @@
 use ophelia::{Bytes, BytesMut, Crypto, Error, HashValue, PrivateKey, PublicKey, Signature};
+use ophelia::{CryptoRng, RngCore};
 use ophelia_derive::SecretDebug;
 
 use lazy_static::lazy_static;
@@ -39,6 +40,15 @@ impl PrivateKey for Secp256k1PrivateKey {
     type Signature = Secp256k1Signature;
 
     const LENGTH: usize = SECRET_KEY_SIZE;
+
+    fn generate<R: RngCore + CryptoRng>(rng: &mut R) -> Self {
+        let mut key = [0u8; SECRET_KEY_SIZE];
+        rng.fill_bytes(&mut key);
+
+        let new_key = secp256k1::SecretKey::from_slice(key.as_ref()).expect("impossible fail");
+
+        Secp256k1PrivateKey(new_key)
+    }
 
     fn sign_message(&self, msg: &HashValue) -> Self::Signature {
         let msg = Message::from(HashedMessage(msg));
@@ -128,12 +138,22 @@ mod tests {
 
     use ophelia::{PrivateKey, PublicKey, Signature};
     use ophelia_quickcheck::{impl_quickcheck_for_privatekey, AHashValue};
-
     use quickcheck_macros::quickcheck;
+    use rand::rngs::OsRng;
 
     use std::convert::TryFrom;
 
     impl_quickcheck_for_privatekey!(Secp256k1PrivateKey);
+
+    #[quickcheck]
+    fn should_generate_workable_key(msg: AHashValue) -> bool {
+        let msg = msg.into_inner();
+        let priv_key = Secp256k1PrivateKey::generate(&mut OsRng);
+        let pub_key = priv_key.pub_key();
+
+        let sig = priv_key.sign_message(&msg);
+        sig.verify(&msg, &pub_key).is_ok()
+    }
 
     #[quickcheck]
     fn prop_private_key_bytes_serialization(priv_key: Secp256k1PrivateKey) -> bool {

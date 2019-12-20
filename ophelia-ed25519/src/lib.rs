@@ -1,6 +1,7 @@
 // TODO: documents
 
 use ophelia::{Bytes, BytesMut, Crypto, Error, HashValue, PrivateKey, PublicKey, Signature};
+use ophelia::{CryptoRng, RngCore};
 use ophelia_derive::SecretDebug;
 
 use curve25519_dalek::scalar::Scalar;
@@ -50,6 +51,15 @@ impl PrivateKey for Ed25519PrivateKey {
     type Signature = Ed25519Signature;
 
     const LENGTH: usize = SECRET_KEY_LENGTH;
+
+    fn generate<R: RngCore + CryptoRng>(rng: &mut R) -> Self {
+        let mut key = [0u8; SECRET_KEY_LENGTH];
+        rng.fill_bytes(&mut key);
+
+        let new_key = ed25519_dalek::SecretKey::from_bytes(key.as_ref()).expect("impossible fail");
+
+        Ed25519PrivateKey(new_key)
+    }
 
     fn sign_message(&self, msg: &HashValue) -> Self::Signature {
         let expanded_secret_key = ed25519_dalek::ExpandedSecretKey::from(&self.0);
@@ -183,11 +193,11 @@ impl Signature for Ed25519Signature {
 mod tests {
     use super::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature};
 
+    use curve25519_dalek::scalar::Scalar;
     use ophelia::{Error, PrivateKey, PublicKey, Signature};
     use ophelia_quickcheck::{impl_quickcheck_for_privatekey, AHashValue};
-
-    use curve25519_dalek::scalar::Scalar;
     use quickcheck_macros::quickcheck;
+    use rand::rngs::OsRng;
 
     use std::convert::TryFrom;
     use std::fmt::Debug;
@@ -410,6 +420,16 @@ mod tests {
         let modified_sig: Ed25519Signature =
             Ed25519Signature::from_bytes_unchecked(&modified_sig_bytes as &[u8]).unwrap();
         assert!(modified_sig.verify(&msg, &pub_key).is_err());
+    }
+
+    #[quickcheck]
+    fn should_generate_workable_key(msg: AHashValue) -> bool {
+        let msg = msg.into_inner();
+        let priv_key = Ed25519PrivateKey::generate(&mut OsRng);
+        let pub_key = priv_key.pub_key();
+
+        let sig = priv_key.sign_message(&msg);
+        sig.verify(&msg, &pub_key).is_ok()
     }
 
     #[quickcheck]

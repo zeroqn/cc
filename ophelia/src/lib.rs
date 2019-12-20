@@ -1,6 +1,7 @@
 pub use anyhow::Error;
 pub use bytes::{Buf, BufMut, Bytes, BytesMut};
 pub use ophelia_hasher::{HashValue, Hasher};
+pub use rand_core::{CryptoRng, RngCore};
 
 use std::convert::TryFrom;
 
@@ -9,6 +10,8 @@ pub trait PrivateKey: for<'a> TryFrom<&'a [u8], Error = Error> + Clone {
     type Signature;
 
     const LENGTH: usize;
+
+    fn generate<R: RngCore + CryptoRng>(rng: &mut R) -> Self;
 
     fn sign_message(&self, msg: &HashValue) -> Self::Signature;
 

@@ -12,11 +12,10 @@ ophelia-derive = { path = "../ophelia-derive", version = "0.1" }
 
 ed25519-dalek = { version = "1.0.0-pre.3", features = [ "asm" ] }
 curve25519-dalek = "2.0"
-# ed25519 requires rand 0.6
-rand = "0.7"
 thiserror = "1.0"
 
 [dev-dependencies]
 quickcheck = "0.9"
 quickcheck_macros = "0.8"
 ophelia-quickcheck = { path = "../ophelia-quickcheck" }
+rand = "0.7"
