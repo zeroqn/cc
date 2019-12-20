@@ -1,16 +1,15 @@
 [package]
-name = "ophelia-ed25519"
+name = "ophelia-bls-amcl"
 version = "0.1.0"
 authors = ["zero.qn <zero.qn@outlook.com>"]
 edition = "2018"
-license = "MIT"
-description = "ophelia ed25519"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+bls_amcl = "0.7"
 ophelia = { path = "../ophelia", version = "0.1" }
 ophelia-derive = { path = "../ophelia-derive", version = "0.1" }
-ed25519-dalek = { version = "1.0.0-pre.3", features = [ "asm" ] }
-curve25519-dalek = "2.0"
 thiserror = "1.0"
 
 [dev-dependencies]
