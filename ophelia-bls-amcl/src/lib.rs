@@ -142,7 +142,7 @@ impl BlsSignatureVerify for BlsSignature {
         cr: &Self::CommonReference,
     ) -> Result<(), Error> {
         if !self.0.verify(msg.as_ref(), &pubkey.0, &cr.0) {
-            Err(BlsError::InvalidSignature)?
+            Err(BlsError::InvalidSignature.into())
         } else {
             Ok(())
         }
@@ -196,11 +196,11 @@ mod tests {
         let cr = "fly me to the moon".into();
         let pub_key = priv_key.pub_key(&cr);
 
-        let cmp_ret = match BlsPublicKey::try_from(pub_key.to_bytes().as_ref()) {
+        let same_key = match BlsPublicKey::try_from(pub_key.to_bytes().as_ref()) {
             Ok(pubkey) => pubkey == pub_key,
             Err(_) => false,
         };
-        assert!(cmp_ret == true)
+        assert!(same_key)
     }
 
     #[test]
@@ -210,11 +210,11 @@ mod tests {
         let priv_key = BlsPrivateKey::generate(&mut OsRng);
         let sig = priv_key.sign_message(&msg);
 
-        let cmp_ret = match BlsSignature::try_from(sig.to_bytes().as_ref()) {
+        let same_sig = match BlsSignature::try_from(sig.to_bytes().as_ref()) {
             Ok(s) => s == sig,
             Err(_) => false,
         };
-        assert!(cmp_ret == true)
+        assert!(same_sig)
     }
 
     #[test]

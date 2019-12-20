@@ -105,10 +105,10 @@ impl Ed25519PublicKey {
         let point = compressed.decompress().ok_or(NotAPoint)?;
 
         if point.is_small_order() {
-            return Err(SmallSubGroup)?;
+            Err(SmallSubGroup.into())
+        } else {
+            Ok(())
         }
-
-        Ok(())
     }
 }
 
@@ -157,10 +157,10 @@ impl Ed25519Signature {
         let point = compressed.decompress().ok_or(NotAPoint)?;
 
         if point.is_small_order() {
-            return Err(SmallSubGroup)?;
+            Err(SmallSubGroup.into())
+        } else {
+            Ok(())
         }
-
-        Ok(())
     }
 }
 

@@ -13,13 +13,13 @@ lazy_static! {
 }
 
 #[derive(thiserror::Error, Debug)]
-enum InternalError {
+enum SM2ErrorKind {
     #[error("invalid public key")]
-    InvalidPublicKey,
+    PublicKey,
     #[error("invalid private key")]
-    InvalidPrivateKey,
+    PrivateKey,
     #[error("invalid signature")]
-    InvalidSignature,
+    Signature,
 }
 
 pub struct Sm2;
@@ -39,7 +39,7 @@ impl TryFrom<&[u8]> for SM2PrivateKey {
     fn try_from(bytes: &[u8]) -> Result<SM2PrivateKey, Self::Error> {
         let secret_key = SM2_CONTEXT
             .load_seckey(bytes)
-            .map_err(|_| InternalError::InvalidPrivateKey)?;
+            .map_err(|_| SM2ErrorKind::PrivateKey)?;
 
         Ok(SM2PrivateKey(secret_key))
     }
@@ -89,7 +89,7 @@ impl TryFrom<&[u8]> for SM2PublicKey {
     fn try_from(bytes: &[u8]) -> Result<SM2PublicKey, Self::Error> {
         let pub_key = SM2_CONTEXT
             .load_pubkey(bytes)
-            .map_err(|_| InternalError::InvalidPublicKey)?;
+            .map_err(|_| SM2ErrorKind::PublicKey)?;
 
         Ok(SM2PublicKey(pub_key))
     }
@@ -115,7 +115,7 @@ impl TryFrom<&[u8]> for SM2Signature {
     type Error = Error;
 
     fn try_from(bytes: &[u8]) -> Result<SM2Signature, Self::Error> {
-        let sig = sm2::Signature::der_decode(bytes).map_err(|_| InternalError::InvalidSignature)?;
+        let sig = sm2::Signature::der_decode(bytes).map_err(|_| SM2ErrorKind::Signature)?;
 
         Ok(SM2Signature(sig))
     }
@@ -143,10 +143,10 @@ impl SignatureVerify for SM2Signature {
 
     fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), Error> {
         if !SM2_CONTEXT.verify_raw(msg.as_ref(), &pub_key.0, &self.0) {
-            return Err(InternalError::InvalidSignature)?;
+            Err(SM2ErrorKind::Signature.into())
+        } else {
+            Ok(())
         }
-
-        Ok(())
     }
 }
 
