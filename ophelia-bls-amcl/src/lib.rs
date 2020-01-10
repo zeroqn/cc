@@ -4,6 +4,11 @@ use ophelia::{CryptoRng, RngCore};
 use ophelia_derive::SecretDebug;
 
 use bls_amcl::common::{Params, SigKey, VerKey};
+#[cfg(not(feature = "rogue-pubkey-resist"))]
+use bls_amcl::multi_sig_fast::{
+    AggregatedVerKeyFast as AggregatedVerKey, MultiSignatureFast as MultiSignature,
+};
+#[cfg(feature = "rogue-pubkey-resist")]
 use bls_amcl::multi_sig_slow::{AggregatedVerKey, MultiSignature};
 use bls_amcl::simple;
 
@@ -104,6 +109,7 @@ impl PublicKey for BlsPublicKey {
 pub struct BlsSignature(simple::Signature);
 
 impl BlsSignature {
+    #[cfg(feature = "rogue-pubkey-resist")]
     pub fn combine(sigs_pubkeys: Vec<(BlsSignature, BlsPublicKey)>) -> Self {
         let sigs_pubkeys = sigs_pubkeys
             .into_iter()
@@ -111,6 +117,16 @@ impl BlsSignature {
             .collect::<Vec<_>>();
 
         BlsSignature(MultiSignature::from_sigs(&sigs_pubkeys))
+    }
+
+    #[cfg(not(feature = "rogue-pubkey-resist"))]
+    pub fn combine(sigs_pubkeys: Vec<(BlsSignature, BlsPublicKey)>) -> Self {
+        let sigs = sigs_pubkeys
+            .iter()
+            .map(|(sig, _)| &sig.0)
+            .collect::<Vec<_>>();
+
+        BlsSignature(MultiSignature::from_sigs(sigs))
     }
 }
 
