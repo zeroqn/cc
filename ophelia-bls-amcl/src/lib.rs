@@ -76,8 +76,8 @@ impl ToBlsPublicKey for BlsPrivateKey {
 pub struct BlsPublicKey(VerKey);
 
 impl BlsPublicKey {
-    pub fn aggregate(keys: Vec<&BlsPublicKey>) -> Self {
-        let keys = keys.into_iter().map(|k| &k.0).collect::<Vec<_>>();
+    pub fn aggregate(keys: Vec<BlsPublicKey>) -> Self {
+        let keys = keys.iter().map(|k| &k.0).collect::<Vec<_>>();
 
         BlsPublicKey(AggregatedVerKey::from_verkeys(keys))
     }
@@ -256,7 +256,7 @@ mod tests {
             (sig_02, plug_02.clone()),
         ]);
 
-        let akey = BlsPublicKey::aggregate(vec![&plug_00, &plug_01, &plug_02]);
+        let akey = BlsPublicKey::aggregate(vec![plug_00, plug_01, plug_02]);
         assert!(msig.verify(&msg, &akey, &cr).is_ok());
     }
 }
