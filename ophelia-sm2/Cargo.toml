@@ -7,8 +7,8 @@ license = "MIT"
 description = "ophelia sm2"
 
 [dependencies]
-ophelia = "0.2"
-ophelia-derive = "0.2"
+ophelia = "0.3"
+ophelia-derive = "0.3"
 libsm = { git = "https://github.com/cryptape/libsm", rev = "ac323abd3512a9fdb8bfd6cd349a6fc46deb688f" }
 lazy_static = "1.4"
 thiserror = "1.0"

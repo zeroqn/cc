@@ -1,14 +1,14 @@
 [package]
 name = "ophelia-secp256k1"
-version = "0.2.2"
+version = "0.3.0"
 authors = ["zero.qn <zero.qn@outlook.com>"]
 edition = "2018"
 license = "MIT"
 description = "ophelia secp256k1"
 
 [dependencies]
-ophelia = "0.3.2"
-ophelia-derive = "0.2"
+ophelia = "0.3"
+ophelia-derive = "0.3"
 secp256k1 = { version = "0.17" }
 lazy_static = "1.4"
 
