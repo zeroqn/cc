@@ -36,7 +36,16 @@ pub trait ToBlsPublicKey {
     fn pub_key(&self, cr: &Self::CommonReference) -> Self::PublicKey;
 }
 
+// Todo: use const generics
 pub trait PublicKey: for<'a> TryFrom<&'a [u8], Error = Error> + Clone {
+    type Signature;
+
+    const LENGTH: usize;
+
+    fn to_bytes(&self) -> Bytes;
+}
+
+pub trait UncompressedPublicKey: for<'a> TryFrom<&'a [u8], Error = Error> + Clone {
     type Signature;
 
     const LENGTH: usize;
