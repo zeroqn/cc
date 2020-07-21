@@ -1,6 +1,6 @@
 [package]
 name = "ophelia"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["zero.qn <zero.qn@outlook.com>"]
 edition = "2018"
 license = "MIT"
