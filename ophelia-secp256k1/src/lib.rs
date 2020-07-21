@@ -1,11 +1,14 @@
 use ophelia::{Bytes, BytesMut, Error};
-use ophelia::{Crypto, HashValue, PrivateKey, PublicKey, Signature, SignatureVerify, ToPublicKey};
+use ophelia::{
+    Crypto, HashValue, PrivateKey, PublicKey, Signature, SignatureVerify, ToPublicKey,
+    UncompressedPublicKey,
+};
 use ophelia::{CryptoRng, RngCore};
 use ophelia_derive::SecretDebug;
 
 use lazy_static::lazy_static;
 use secp256k1::{
-    constants::{PUBLIC_KEY_SIZE, SECRET_KEY_SIZE},
+    constants::{PUBLIC_KEY_SIZE, SECRET_KEY_SIZE, UNCOMPRESSED_PUBLIC_KEY_SIZE},
     All, Message, ThirtyTwoByteHash,
 };
 
@@ -92,6 +95,16 @@ impl PublicKey for Secp256k1PublicKey {
 
     fn to_bytes(&self) -> Bytes {
         BytesMut::from(self.0.serialize().as_ref()).freeze()
+    }
+}
+
+impl UncompressedPublicKey for Secp256k1PublicKey {
+    type Signature = Secp256k1Signature;
+
+    const LENGTH: usize = UNCOMPRESSED_PUBLIC_KEY_SIZE;
+
+    fn to_bytes(&self) -> Bytes {
+        Bytes::copy_from_slice(&self.0.serialize_uncompressed())
     }
 }
 
