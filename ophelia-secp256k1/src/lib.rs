@@ -103,7 +103,7 @@ impl UncompressedPublicKey for Secp256k1PublicKey {
 
     const LENGTH: usize = UNCOMPRESSED_PUBLIC_KEY_SIZE;
 
-    fn to_bytes(&self) -> Bytes {
+    fn to_uncompressed_bytes(&self) -> Bytes {
         Bytes::copy_from_slice(&self.0.serialize_uncompressed())
     }
 }
