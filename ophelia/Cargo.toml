@@ -9,5 +9,5 @@ description = "ophelia crypto collection"
 [dependencies]
 anyhow = "1.0"
 bytes = "0.5"
-ophelia-hasher = { path = "../ophelia-hasher", version = "0.2" }
+ophelia-hasher = "0.2"
 rand_core = "0.5"

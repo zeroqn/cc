@@ -7,7 +7,7 @@ license = "MIT"
 description = "ophelia keccak256 hasher"
 
 [dependencies]
-ophelia-hasher = { path = "../ophelia-hasher", version = "0.2" }
+ophelia-hasher = "0.2"
 tiny-keccak = { version = "2.0", features = ["keccak"] }
 
 [dev-dependencies]

@@ -10,8 +10,8 @@ description = "ophelia bls"
 
 [dependencies]
 bls_amcl = "0.7"
-ophelia = { path = "../ophelia", version = "0.2" }
-ophelia-derive = { path = "../ophelia-derive", version = "0.2" }
+ophelia = "0.2"
+ophelia-derive = "0.2"
 thiserror = "1.0"
 
 [features]

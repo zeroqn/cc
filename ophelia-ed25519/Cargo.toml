@@ -7,8 +7,8 @@ license = "MIT"
 description = "ophelia ed25519"
 
 [dependencies]
-ophelia = { path = "../ophelia", version = "0.2" }
-ophelia-derive = { path = "../ophelia-derive", version = "0.2" }
+ophelia = "0.2"
+ophelia-derive = "0.2"
 ed25519-dalek = { version = "1.0.0-pre.3", features = [ "asm" ] }
 curve25519-dalek = "2.0"
 thiserror = "1.0"

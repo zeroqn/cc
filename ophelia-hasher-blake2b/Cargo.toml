@@ -7,7 +7,7 @@ license = "MIT"
 description = "ophelia blake2b hasher"
 
 [dependencies]
-ophelia-hasher = { path = "../ophelia-hasher", version = "0.2" }
+ophelia-hasher = "0.2"
 blake2b_simd = "0.5"
 
 [dev-dependencies]
