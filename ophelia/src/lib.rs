@@ -23,12 +23,6 @@ pub trait ToPublicKey {
     fn pub_key(&self) -> Self::PublicKey;
 }
 
-pub trait ToUncompressedPublicKey {
-    type PublicKey;
-
-    fn uncompressed_pub_key(&self) -> Self::PublicKey;
-}
-
 pub trait ToBlsPublicKey {
     type PublicKey;
     type CommonReference;
