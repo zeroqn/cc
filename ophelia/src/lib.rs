@@ -44,7 +44,7 @@ pub trait UncompressedPublicKey: for<'a> TryFrom<&'a [u8], Error = Error> + Clon
 
     const LENGTH: usize;
 
-    fn to_bytes(&self) -> Bytes;
+    fn to_uncompressed_bytes(&self) -> Bytes;
 }
 
 pub trait Signature: for<'a> TryFrom<&'a [u8], Error = Error> + Clone {
