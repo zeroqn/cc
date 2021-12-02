@@ -6,7 +6,7 @@ use quickcheck::{Arbitrary, Gen};
 macro_rules! impl_quickcheck_for_privatekey {
     ($priv_key:ident) => {
         impl quickcheck::Arbitrary for $priv_key {
-            fn arbitrary<G: quickcheck::Gen>(g: &mut G) -> $priv_key {
+            fn arbitrary(g: &mut quickcheck::Gen) -> $priv_key {
                 let octet32 = ophelia_quickcheck::Octet32::arbitrary(g);
 
                 $priv_key::try_from(octet32.as_ref()).unwrap()
@@ -26,7 +26,7 @@ impl AsRef<[u8]> for Octet32 {
 }
 
 impl Arbitrary for Octet32 {
-    fn arbitrary<G: Gen>(g: &mut G) -> Octet32 {
+    fn arbitrary(g: &mut Gen) -> Octet32 {
         let mut octet32 = [0u8; 32];
 
         for octet in &mut octet32 {
@@ -47,7 +47,7 @@ impl AHashValue {
 }
 
 impl quickcheck::Arbitrary for AHashValue {
-    fn arbitrary<G: quickcheck::Gen>(g: &mut G) -> AHashValue {
+    fn arbitrary(g: &mut quickcheck::Gen) -> AHashValue {
         let mut hash = [0u8; 32];
 
         for byte in &mut hash {

@@ -10,5 +10,5 @@ description = "ophelia hasher trait"
 thiserror = "1.0"
 
 [dev-dependencies]
-quickcheck = "0.9"
-quickcheck_macros = "0.8"
+quickcheck = "1.0"
+quickcheck_macros = "1.0"

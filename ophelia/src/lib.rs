@@ -1,7 +1,7 @@
 pub use anyhow::Error;
 pub use bytes::{Buf, BufMut, Bytes, BytesMut};
 pub use ophelia_hasher::{HashValue, Hasher};
-pub use rand_core::{CryptoRng, RngCore};
+pub use rand::{CryptoRng, RngCore};
 
 use std::convert::TryFrom;
 

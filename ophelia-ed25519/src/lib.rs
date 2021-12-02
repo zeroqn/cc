@@ -6,7 +6,7 @@ use ophelia::{CryptoRng, RngCore};
 use ophelia_derive::SecretDebug;
 
 use curve25519_dalek::scalar::Scalar;
-use ed25519_dalek::{PUBLIC_KEY_LENGTH, SECRET_KEY_LENGTH};
+use ed25519_dalek::Verifier;
 
 use std::convert::TryFrom;
 
@@ -50,10 +50,10 @@ impl Clone for Ed25519PrivateKey {
 impl PrivateKey for Ed25519PrivateKey {
     type Signature = Ed25519Signature;
 
-    const LENGTH: usize = SECRET_KEY_LENGTH;
+    const LENGTH: usize = ed25519_dalek::SECRET_KEY_LENGTH;
 
     fn generate<R: RngCore + CryptoRng>(rng: &mut R) -> Self {
-        let mut key = [0u8; SECRET_KEY_LENGTH];
+        let mut key = [0u8; ed25519_dalek::SECRET_KEY_LENGTH];
         rng.fill_bytes(&mut key);
 
         let new_key = ed25519_dalek::SecretKey::from_bytes(key.as_ref()).expect("impossible fail");
@@ -129,7 +129,7 @@ impl TryFrom<&[u8]> for Ed25519PublicKey {
 impl PublicKey for Ed25519PublicKey {
     type Signature = Ed25519Signature;
 
-    const LENGTH: usize = PUBLIC_KEY_LENGTH;
+    const LENGTH: usize = ed25519_dalek::PUBLIC_KEY_LENGTH;
 
     fn to_bytes(&self) -> Bytes {
         BytesMut::from(self.0.as_bytes().as_ref()).freeze()
@@ -200,6 +200,8 @@ mod tests {
     use super::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature};
 
     use curve25519_dalek::scalar::Scalar;
+    use ed25519_dalek::Verifier;
+
     use ophelia::{Error, PrivateKey, PublicKey, Signature, SignatureVerify, ToPublicKey};
     use ophelia_quickcheck::{impl_quickcheck_for_privatekey, AHashValue};
     use quickcheck_macros::quickcheck;

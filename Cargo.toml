@@ -5,11 +5,9 @@ members = [
   "ophelia-bls-amcl",
   "ophelia-ed25519",
   "ophelia-secp256k1",
-  "ophelia-sm2",
   "ophelia-derive",
   "ophelia-quickcheck",
   "ophelia-hasher",
   "ophelia-hasher-keccak256",
   "ophelia-hasher-blake2b",
-  "ophelia-hasher-sm3",
 ]

@@ -1,6 +1,6 @@
 [package]
 name = "ophelia-bls-amcl"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["zero.qn <zero.qn@outlook.com>"]
 edition = "2018"
 license = "MIT"
@@ -9,7 +9,7 @@ description = "ophelia bls"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bls_amcl = "0.7"
+bls_amcl_hotfix = "0.7"
 ophelia = "0.3"
 ophelia-derive = "0.3"
 thiserror = "1.0"
@@ -19,7 +19,7 @@ default = []
 rogue-pubkey-resist = []
 
 [dev-dependencies]
-quickcheck = "0.9"
-quickcheck_macros = "0.8"
+quickcheck = "1.0"
+quickcheck_macros = "1.0"
 ophelia-quickcheck = { path = "../ophelia-quickcheck" }
 rand = "0.7"

@@ -14,8 +14,8 @@ lazy_static = "1.4"
 thiserror = "1.0"
 
 [dev-dependencies]
-sha2 = "0.8"
-quickcheck = "0.9"
-quickcheck_macros = "0.8"
+sha2 = "0.9"
+quickcheck = "1.0"
+quickcheck_macros = "1.0"
 ophelia-quickcheck = { path = "../ophelia-quickcheck" }
-rand = "0.7"
+rand = "0.8"

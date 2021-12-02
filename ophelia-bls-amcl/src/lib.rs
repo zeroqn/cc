@@ -3,14 +3,14 @@ use ophelia::{Bytes, Error};
 use ophelia::{CryptoRng, RngCore};
 use ophelia_derive::SecretDebug;
 
-use bls_amcl::common::{Params, SigKey, VerKey};
+use bls_amcl_hotfix::common::{Params, SigKey, VerKey};
 #[cfg(not(feature = "rogue-pubkey-resist"))]
-use bls_amcl::multi_sig_fast::{
+use bls_amcl_hotfix::multi_sig_fast::{
     AggregatedVerKeyFast as AggregatedVerKey, MultiSignatureFast as MultiSignature,
 };
 #[cfg(feature = "rogue-pubkey-resist")]
-use bls_amcl::multi_sig_slow::{AggregatedVerKey, MultiSignature};
-use bls_amcl::simple;
+use bls_amcl_hotfix::multi_sig_slow::{AggregatedVerKey, MultiSignature};
+use bls_amcl_hotfix::simple;
 
 use std::convert::TryFrom;
 
@@ -179,7 +179,7 @@ mod tests {
     use std::convert::TryFrom;
 
     impl Arbitrary for BlsPrivateKey {
-        fn arbitrary<G: Gen>(_: &mut G) -> BlsPrivateKey {
+        fn arbitrary(_: &mut Gen) -> BlsPrivateKey {
             BlsPrivateKey::generate(&mut OsRng)
         }
     }

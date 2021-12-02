@@ -60,7 +60,7 @@ mod tests {
     use std::convert::TryFrom;
 
     impl quickcheck::Arbitrary for HashValue {
-        fn arbitrary<G: quickcheck::Gen>(g: &mut G) -> HashValue {
+        fn arbitrary(g: &mut quickcheck::Gen) -> HashValue {
             let mut hash = [0u8; 32];
 
             for byte in &mut hash {
