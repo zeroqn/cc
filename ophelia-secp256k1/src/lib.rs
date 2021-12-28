@@ -9,6 +9,7 @@ use ophelia_derive::SecretDebug;
 use lazy_static::lazy_static;
 use secp256k1::{
     constants::{PUBLIC_KEY_SIZE, SECRET_KEY_SIZE, UNCOMPRESSED_PUBLIC_KEY_SIZE},
+    key,
     recovery::{RecoverableSignature, RecoveryId},
     All, Message, ThirtyTwoByteHash,
 };
@@ -285,6 +286,11 @@ impl<'a> ThirtyTwoByteHash for HashedMessage<'a> {
     fn into_32(self) -> [u8; 32] {
         self.to_bytes()
     }
+}
+
+pub fn recover(msg: &Message, sig: &RecoverableSignature) -> Result<key::PublicKey, Error> {
+    let ret = ENGINE.recover(msg, sig)?;
+    Ok(ret)
 }
 
 #[cfg(test)]
