@@ -288,8 +288,10 @@ impl<'a> ThirtyTwoByteHash for HashedMessage<'a> {
     }
 }
 
-pub fn recover(msg: &Message, sig: &RecoverableSignature) -> Result<key::PublicKey, Error> {
-    let ret = ENGINE.recover(msg, sig)?;
+pub fn recover(msg: &[u8], sig: &[u8]) -> Result<key::PublicKey, Error> {
+    let msg = Message::from(HashedMessage(&HashValue::try_from(msg)?));
+    let sig = Secp256k1RecoverableSignature::try_from(sig)?;
+    let ret = ENGINE.recover(&msg, &sig.0)?;
     Ok(ret)
 }
 
@@ -297,7 +299,7 @@ pub fn recover(msg: &Message, sig: &RecoverableSignature) -> Result<key::PublicK
 mod tests {
     use super::{
         Secp256k1PrivateKey, Secp256k1PublicKey, Secp256k1RecoverablePrivateKey,
-        Secp256k1RecoverablePublicKey, Secp256k1RecoverableSignature, Secp256k1Signature,
+        Secp256k1RecoverableSignature, Secp256k1Signature,
     };
 
     use ophelia::{PrivateKey, PublicKey, Signature, SignatureVerify, ToPublicKey};
