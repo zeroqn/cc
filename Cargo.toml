@@ -2,6 +2,7 @@
 
 members = [
   "ophelia",
+  "ophelia-blst",
   "ophelia-bls-amcl",
   "ophelia-ed25519",
   "ophelia-secp256k1",

@@ -1,0 +1,25 @@
+[package]
+name = "ophelia-blst"
+version = "0.3.0"
+authors = ["Eason Gao <kaoimin@qq.com>"]
+edition = "2018"
+license = "MIT"
+description = "ophelia blst"
+
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+blst = "0.3"
+ophelia = "0.3"
+ophelia-derive = "0.3"
+thiserror = "1.0"
+
+[features]
+default = []
+
+[dev-dependencies]
+quickcheck = "1.0"
+quickcheck_macros = "1.0"
+ophelia-quickcheck = { path = "../ophelia-quickcheck" }
+rand = "0.7"
