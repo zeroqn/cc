@@ -1,6 +1,6 @@
 [package]
 name = "ophelia-blst"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Eason Gao <kaoimin@qq.com>"]
 edition = "2018"
 license = "MIT"
@@ -17,6 +17,7 @@ thiserror = "1.0"
 
 [features]
 default = []
+fast = []
 
 [dev-dependencies]
 quickcheck = "1.0"
