@@ -107,9 +107,12 @@ impl BlsSignature {
             .iter()
             .map(|(sig, _)| &sig.0)
             .collect::<Vec<_>>();
-        let aggregated_sig = bls::AggregateSignature::aggregate(&sigs, true).map_err(|_| BlsError::AggregateSignature)?;
+        let aggregated_sig = bls::AggregateSignature::aggregate(&sigs, true)
+            .map_err(|_| BlsError::AggregateSignature)?;
 
-        Ok(BlsSignature(bls::Signature::from_aggregate(&aggregated_sig)))
+        Ok(BlsSignature(bls::Signature::from_aggregate(
+            &aggregated_sig,
+        )))
     }
 }
 
@@ -140,9 +143,13 @@ impl BlsSignatureVerify for BlsSignature {
         pubkey: &Self::PublicKey,
         _cr: &Self::CommonReference,
     ) -> Result<(), Error> {
-        if self.0.verify(true, msg.as_ref(), DST.as_bytes(), &[], &pubkey.0, true) == BLST_ERROR::BLST_SUCCESS {
+        if self
+            .0
+            .verify(true, msg.as_ref(), DST.as_bytes(), &[], &pubkey.0, true)
+            == BLST_ERROR::BLST_SUCCESS
+        {
             return Ok(());
-        } 
+        }
 
         Err(BlsError::InvalidSignature.into())
     }
@@ -228,7 +235,8 @@ mod tests {
             (sig_00, plug_00.clone()),
             (sig_01, plug_01.clone()),
             (sig_02, plug_02.clone()),
-        ]).unwrap();
+        ])
+        .unwrap();
 
         let akey = BlsPublicKey::aggregate(vec![plug_00, plug_01, plug_02]).unwrap();
 

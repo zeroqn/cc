@@ -1,3 +1,5 @@
+pub use secp256k1;
+
 use ophelia::{Bytes, BytesMut, Error};
 use ophelia::{
     Crypto, HashValue, PrivateKey, PublicKey, Signature, SignatureVerify, ToPublicKey,
@@ -9,8 +11,7 @@ use ophelia_derive::SecretDebug;
 use lazy_static::lazy_static;
 use secp256k1::{
     constants::{PUBLIC_KEY_SIZE, SECRET_KEY_SIZE, UNCOMPRESSED_PUBLIC_KEY_SIZE},
-    key,
-    recovery::{RecoverableSignature, RecoveryId},
+    ecdsa::{self, RecoverableSignature, RecoveryId},
     All, Message, ThirtyTwoByteHash,
 };
 
@@ -57,7 +58,7 @@ impl PrivateKey for Secp256k1PrivateKey {
 
     fn sign_message(&self, msg: &HashValue) -> Self::Signature {
         let msg = Message::from(HashedMessage(msg));
-        let sig = ENGINE.sign(&msg, &self.0);
+        let sig = ENGINE.sign_ecdsa(&msg, &self.0);
 
         Secp256k1Signature(sig)
     }
@@ -111,13 +112,13 @@ impl UncompressedPublicKey for Secp256k1PublicKey {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct Secp256k1Signature(secp256k1::Signature);
+pub struct Secp256k1Signature(ecdsa::Signature);
 
 impl TryFrom<&[u8]> for Secp256k1Signature {
     type Error = Error;
 
     fn try_from(bytes: &[u8]) -> Result<Secp256k1Signature, Self::Error> {
-        let sig = secp256k1::Signature::from_compact(bytes)?;
+        let sig = ecdsa::Signature::from_compact(bytes)?;
 
         Ok(Secp256k1Signature(sig))
     }
@@ -135,7 +136,7 @@ impl SignatureVerify for Secp256k1Signature {
     fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), Error> {
         let msg = Message::from(HashedMessage(msg));
 
-        Ok(ENGINE.verify(&msg, &self.0, &pub_key.0)?)
+        Ok(ENGINE.verify_ecdsa(&msg, &self.0, &pub_key.0)?)
     }
 }
 
@@ -180,7 +181,7 @@ impl PrivateKey for Secp256k1RecoverablePrivateKey {
 
     fn sign_message(&self, msg: &HashValue) -> Self::Signature {
         let msg = Message::from(HashedMessage(msg));
-        let sig = ENGINE.sign_recoverable(&msg, &self.0);
+        let sig = ENGINE.sign_ecdsa_recoverable(&msg, &self.0);
 
         Secp256k1RecoverableSignature(sig)
     }
@@ -264,7 +265,7 @@ impl SignatureVerify for Secp256k1RecoverableSignature {
 
     fn verify(&self, msg: &HashValue, pub_key: &Self::PublicKey) -> Result<(), Error> {
         let msg = Message::from(HashedMessage(msg));
-        let recover_pk = ENGINE.recover(&msg, &self.0)?;
+        let recover_pk = ENGINE.recover_ecdsa(&msg, &self.0)?;
 
         if recover_pk == pub_key.0 {
             Ok(())
@@ -288,10 +289,10 @@ impl<'a> ThirtyTwoByteHash for HashedMessage<'a> {
     }
 }
 
-pub fn recover(msg: &[u8], sig: &[u8]) -> Result<key::PublicKey, Error> {
+pub fn recover(msg: &[u8], sig: &[u8]) -> Result<secp256k1::PublicKey, Error> {
     let msg = Message::from(HashedMessage(&HashValue::try_from(msg)?));
     let sig = Secp256k1RecoverableSignature::try_from(sig)?;
-    let ret = ENGINE.recover(&msg, &sig.0)?;
+    let ret = ENGINE.recover_ecdsa(&msg, &sig.0)?;
     Ok(ret)
 }
 
