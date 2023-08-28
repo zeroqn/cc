@@ -45,7 +45,7 @@ mod tests {
 
         let expect_hash = blake2b_simd::Params::new()
             .hash_length(HashValue::LENGTH)
-            .key(&key.as_bytes())
+            .key(key.as_bytes())
             .hash(msg.as_bytes());
 
         let bytes = Blake2b::new(key.as_bytes())

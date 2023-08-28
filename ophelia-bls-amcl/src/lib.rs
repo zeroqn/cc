@@ -24,9 +24,9 @@ pub enum BlsError {
 
 pub struct BlsCommonReference(Params);
 
-impl<'a> Into<BlsCommonReference> for &'a str {
-    fn into(self) -> BlsCommonReference {
-        BlsCommonReference(Params::new(self.as_ref()))
+impl<'a> From<&'a str> for BlsCommonReference {
+    fn from(s: &'a str) -> Self {
+         BlsCommonReference(Params::new(s.as_ref()))
     }
 }
 

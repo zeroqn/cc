@@ -378,7 +378,7 @@ mod tests {
         }
 
         /// Pack the limbs of this `Scalar52` into 32 bytes
-        pub fn to_bytes(&self) -> [u8; 32] {
+        pub fn to_bytes(self) -> [u8; 32] {
             let mut s = [0u8; 32];
 
             s[0] = self.0[0] as u8;
